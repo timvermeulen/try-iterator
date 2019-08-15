@@ -34,23 +34,10 @@ where
         R: Try<Ok = Acc>,
         R::Error: From<Self::Error>,
     {
-        match self.iter.try_fold(acc, |acc, x| {
-            g(acc, x).into_result().map_err(MappedErr::Map)
-        }) {
-            Ok(x) => Try::from_ok(x),
-            Err(MappedErr::Iter(e)) => Try::from_error((self.f)(e).into()),
-            Err(MappedErr::Map(e)) => Try::from_error(e),
-        }
-    }
-}
-
-enum MappedErr<I, M> {
-    Iter(I),
-    Map(M),
-}
-
-impl<I, M> From<I> for MappedErr<I, M> {
-    fn from(x: I) -> MappedErr<I, M> {
-        MappedErr::Iter(x)
+        self.iter
+            .try_fold(acc, |acc, x| LoopState::continue_with_try(g(acc, x)))
+            .map_iter_error(&mut self.f)
+            .map_break_value(|x: !| x)
+            .into_try()
     }
 }

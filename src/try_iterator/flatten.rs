@@ -6,12 +6,12 @@ pub struct Flatten<I, U> {
     back: Option<U>,
 }
 
-impl<I, U, E> Flatten<I, U>
+impl<I, U> Flatten<I, U>
 where
-    I: TryIterator<Error = E>,
+    I: TryIterator,
     U: TryIterator,
     I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
-    E: From<U::Error>,
+    I::Error: From<U::Error>,
 {
     pub(crate) fn new(iter: I) -> Self {
         Self {
@@ -25,7 +25,7 @@ where
     where
         Fold: FnMut(Acc, &mut U) -> R,
         R: Try<Ok = Acc>,
-        R::Error: From<E>,
+        R::Error: From<I::Error>,
     {
         let mut fold = |acc, iter: &mut _| -> R {
             let acc = match iter {
@@ -48,15 +48,15 @@ where
     }
 }
 
-impl<I, U, E> TryIterator for Flatten<I, U>
+impl<I, U> TryIterator for Flatten<I, U>
 where
-    I: TryIterator<Error = E>,
+    I: TryIterator,
     U: TryIterator,
     I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
-    E: From<U::Error>,
+    I::Error: From<U::Error>,
 {
     type Item = U::Item;
-    type Error = E;
+    type Error = I::Error;
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.find(|_| true)

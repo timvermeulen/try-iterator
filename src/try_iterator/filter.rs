@@ -2,25 +2,25 @@ use super::*;
 
 pub struct Filter<I, P> {
     iter: I,
-    predicate: P,
+    f: P,
 }
 
-impl<I, P> Filter<I, P> {
-    pub(crate) fn new<R>(iter: I, predicate: P) -> Self
+impl<I, F> Filter<I, F> {
+    pub(crate) fn new<R>(iter: I, f: F) -> Self
     where
         I: TryIterator,
-        P: FnMut(&I::Item) -> R,
+        F: FnMut(&I::Item) -> R,
         R: Try<Ok = bool>,
         R::Error: From<I::Error>,
     {
-        Self { iter, predicate }
+        Self { iter, f }
     }
 }
 
-impl<I, P, R> TryIterator for Filter<I, P>
+impl<I, F, R> TryIterator for Filter<I, F>
 where
     I: TryIterator,
-    P: FnMut(&I::Item) -> R,
+    F: FnMut(&I::Item) -> R,
     R: Try<Ok = bool>,
     R::Error: From<I::Error>,
 {
@@ -31,16 +31,16 @@ where
         self.find(|_| true)
     }
 
-    fn try_fold<Acc, F, Q>(&mut self, acc: Acc, mut f: F) -> Q
+    fn try_fold<Acc, G, Q>(&mut self, acc: Acc, mut g: G) -> Q
     where
-        F: FnMut(Acc, Self::Item) -> Q,
+        G: FnMut(Acc, Self::Item) -> Q,
         Q: Try<Ok = Acc>,
         Q::Error: From<Self::Error>,
     {
-        let p = &mut self.predicate;
+        let f = &mut self.f;
         self.iter.map_err_mut(From::from).try_fold(acc, |acc, x| {
-            if p(&x)? {
-                f(acc, x)
+            if f(&x)? {
+                g(acc, x)
             } else {
                 Try::from_ok(acc)
             }

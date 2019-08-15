@@ -1,13 +1,13 @@
 use super::*;
 
 pub trait IteratorExt: Iterator {
-    fn try_filter<P, R>(self, predicate: P) -> Filter<IteratorWrapper<Self, R::Error>, P>
+    fn try_filter<F, R>(self, f: F) -> Filter<IteratorWrapper<Self, R::Error>, F>
     where
         Self: Sized,
-        P: FnMut(&Self::Item) -> R,
+        F: FnMut(&Self::Item) -> R,
         R: Try<Ok = bool>,
     {
-        IteratorWrapper::new(self).try_filter(predicate)
+        IteratorWrapper::new(self).try_filter(f)
     }
 
     fn try_inspect<F, R>(self, f: F) -> Inspect<IteratorWrapper<Self, R::Error>, F>
@@ -51,6 +51,33 @@ pub trait IteratorExt: Iterator {
         IteratorWrapper::new(self).try_flat_map(f)
     }
 
+    fn try_take_while<F, R>(self, f: F) -> TakeWhile<IteratorWrapper<Self, R::Error>, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_take_while(f)
+    }
+
+    fn try_skip_while<F, R>(self, f: F) -> SkipWhile<IteratorWrapper<Self, R::Error>, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_skip_while(f)
+    }
+
+    fn try_scan<St, F, R, T>(self, state: St, f: F) -> Scan<IteratorWrapper<Self, R::Error>, St, F>
+    where
+        Self: Sized,
+        F: FnMut(&mut St, Self::Item) -> R,
+        R: Try<Ok = Option<T>>,
+    {
+        IteratorWrapper::new(self).try_scan(state, f)
+    }
+
     fn try_find_map<F, R, T>(&mut self, f: F) -> R
     where
         Self: Sized,
@@ -67,6 +94,15 @@ pub trait IteratorExt: Iterator {
         R: Try<Ok = bool>,
     {
         IteratorWrapper::new(self).try_find(f)
+    }
+
+    fn try_position<F, R>(&mut self, f: F) -> Result<Option<usize>, R::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_position(f)
     }
 
     fn try_any<F, R>(&mut self, f: F) -> R
@@ -123,6 +159,49 @@ pub trait IteratorExt: Iterator {
         T: Ord,
     {
         IteratorWrapper::new(self).try_max_by_key(f)
+    }
+
+    fn try_partial_cmp_by<I, F, R>(self, other: I, f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = Option<Ordering>>,
+        R::Error: From<I::Error>,
+    {
+        IteratorWrapper::new(self).try_partial_cmp_by(other, f)
+    }
+
+    fn try_cmp_by<I, F, R>(self, other: I, f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = Ordering>,
+        R::Error: From<I::Error>,
+    {
+        IteratorWrapper::new(self).try_cmp_by(other, f)
+    }
+
+    fn try_eq_by<I, F, R>(self, other: I, f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<I::Error>,
+    {
+        IteratorWrapper::new(self).try_eq_by(other, f)
+    }
+
+    fn try_partition<B, F, R>(self, f: F) -> Result<(B, B), R::Error>
+    where
+        Self: Sized,
+        B: Default + Extend<Self::Item>,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_partition(f)
     }
 }
 

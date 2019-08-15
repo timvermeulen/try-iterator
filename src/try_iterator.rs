@@ -1,22 +1,62 @@
 use super::*;
 
+mod chain;
+mod cloned;
+mod copied;
+mod cycle;
 mod enumerate;
 mod filter;
 mod filter_map;
 mod flatten;
+mod from_fn;
+mod fuse;
 mod inspect;
+mod into_results;
+mod loopstate;
 mod map;
 mod map_err;
 mod map_err_mut;
+mod once_with;
+mod peekable;
+mod repeat_with;
+mod scan;
+mod skip;
+mod skip_while;
+mod step_by;
+mod successors;
+mod take;
+mod take_while;
+mod zip;
 
+pub use chain::Chain;
+pub use cloned::Cloned;
+pub use copied::Copied;
+pub use cycle::Cycle;
 pub use enumerate::Enumerate;
 pub use filter::Filter;
 pub use filter_map::FilterMap;
 pub use flatten::Flatten;
+pub use from_fn::{from_fn, FromFn};
+pub use fuse::Fuse;
 pub use inspect::Inspect;
+pub use into_results::IntoResults;
 pub use map::Map;
 pub use map_err::MapErr;
 pub use map_err_mut::MapErrMut;
+pub use once_with::{once_with, OnceWith};
+pub use peekable::Peekable;
+pub use repeat_with::{repeat_with, RepeatWith};
+pub use scan::Scan;
+pub use skip::Skip;
+pub use skip_while::SkipWhile;
+pub use step_by::StepBy;
+pub use successors::{successors, Successors};
+pub use take::Take;
+pub use take_while::TakeWhile;
+pub use zip::Zip;
+
+use loopstate::*;
+use std::iter::{FromIterator, Product, Sum};
 
 pub trait TryIterator {
     type Item;
@@ -24,22 +64,22 @@ pub trait TryIterator {
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error>;
 
-    fn filter<P>(self, predicate: P) -> Filter<Self, FnWrapper<P, Self::Error>>
+    fn filter<F>(self, f: F) -> Filter<Self, FnWrapper<F, Self::Error>>
     where
         Self: Sized,
-        P: FnMut(&Self::Item) -> bool,
+        F: FnMut(&Self::Item) -> bool,
     {
-        self.try_filter(FnWrapper::new(predicate))
+        self.try_filter(FnWrapper::new(f))
     }
 
-    fn try_filter<P, R>(self, predicate: P) -> Filter<Self, P>
+    fn try_filter<F, R>(self, f: F) -> Filter<Self, F>
     where
         Self: Sized,
-        P: FnMut(&Self::Item) -> R,
+        F: FnMut(&Self::Item) -> R,
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        Filter::new(self, predicate)
+        Filter::new(self, f)
     }
 
     fn inspect<F>(self, f: F) -> Inspect<Self, FnWrapper<F, Self::Error>>
@@ -54,7 +94,8 @@ pub trait TryIterator {
     where
         Self: Sized,
         F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = (), Error = Self::Error>,
+        R: Try<Ok = ()>,
+        R::Error: From<Self::Error>,
     {
         Inspect::new(self, f)
     }
@@ -129,6 +170,143 @@ pub trait TryIterator {
         Flatten::new(self)
     }
 
+    fn zip<I>(self, other: I) -> Zip<Self, I>
+    where
+        Self: Sized,
+        I: TryIterator,
+        Self::Error: From<I::Error>,
+    {
+        Zip::new(self, other)
+    }
+
+    fn chain<I>(self, other: I) -> Chain<Self, I>
+    where
+        Self: Sized,
+        I: TryIterator<Item = Self::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Chain::new(self, other)
+    }
+
+    fn take(self, n: usize) -> Take<Self>
+    where
+        Self: Sized,
+    {
+        Take::new(self, n)
+    }
+
+    fn take_while<F>(self, f: F) -> TakeWhile<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_take_while(FnWrapper::new(f))
+    }
+
+    fn try_take_while<F, R>(self, f: F) -> TakeWhile<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        TakeWhile::new(self, f)
+    }
+
+    fn skip(self, n: usize) -> Skip<Self>
+    where
+        Self: Sized,
+    {
+        Skip::new(self, n)
+    }
+
+    fn skip_while<F>(self, f: F) -> SkipWhile<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_skip_while(FnWrapper::new(f))
+    }
+
+    fn try_skip_while<F, R>(self, f: F) -> SkipWhile<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        SkipWhile::new(self, f)
+    }
+
+    fn scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&mut St, Self::Item) -> Option<T>,
+    {
+        Scan::new(self, state, FnWrapper::new(f))
+    }
+
+    fn try_scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, F>
+    where
+        Self: Sized,
+        F: FnMut(&mut St, Self::Item) -> R,
+        R: Try<Ok = Option<T>>,
+        R::Error: From<Self::Error>,
+    {
+        Scan::new(self, state, f)
+    }
+
+    fn cycle(self) -> Cycle<Self>
+    where
+        Self: Sized + Clone,
+    {
+        Cycle::new(self)
+    }
+
+    fn cloned<'a, T>(self) -> Cloned<Self>
+    where
+        Self: Sized + TryIterator<Item = &'a T>,
+        T: Clone + 'a,
+    {
+        Cloned::new(self)
+    }
+
+    fn copied<'a, T>(self) -> Copied<Self>
+    where
+        Self: Sized + TryIterator<Item = &'a T>,
+        T: Copy + 'a,
+    {
+        Copied::new(self)
+    }
+
+    fn enumerate(self) -> Enumerate<Self>
+    where
+        Self: Sized,
+    {
+        Enumerate::new(self)
+    }
+
+    fn fuse(self) -> Fuse<Self>
+    where
+        Self: Sized,
+    {
+        Fuse::new(self)
+    }
+
+    fn peekable(self) -> Peekable<Self>
+    where
+        Self: Sized,
+    {
+        Peekable::new(self)
+    }
+
+    fn step_by(self, n: usize) -> StepBy<Self>
+    where
+        Self: Sized,
+    {
+        StepBy::new(self, n)
+    }
+
     fn fold<Acc, F>(mut self, acc: Acc, mut f: F) -> Result<Acc, Self::Error>
     where
         Self: Sized,
@@ -180,16 +358,16 @@ pub trait TryIterator {
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
-        R: Try<Ok = Option<T>, Error = Self::Error>,
+        R: Try<Ok = Option<T>>,
+        R::Error: From<Self::Error>,
     {
-        match self.try_for_each(|x| match f(x)? {
-            None => Ok(()),
-            Some(x) => Err(FoldStop::Break(x)),
-        }) {
-            Ok(()) => Try::from_ok(None),
-            Err(FoldStop::Break(x)) => Try::from_ok(Some(x)),
-            Err(FoldStop::Err(e)) => Try::from_error(e),
-        }
+        self.try_for_each(|x| match f(x).into_result() {
+            Ok(None) => LoopState::Continue(()),
+            Ok(Some(x)) => LoopState::BreakValue(Some(x)),
+            Err(e) => LoopState::MapError(e),
+        })
+        .map_continue(|()| None)
+        .into_try()
     }
 
     fn find<F>(&mut self, f: F) -> Result<Option<Self::Item>, Self::Error>
@@ -200,13 +378,40 @@ pub trait TryIterator {
         self.try_find(FnWrapper::new(f))
     }
 
-    fn try_find<F, R>(&mut self, mut f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn try_find<F, R>(&mut self, mut f: F) -> Result<Option<Self::Item>, R::Error>
     where
         Self: Sized,
         F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = bool, Error = Self::Error>,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
     {
         self.try_find_map(|x| Ok(if f(&x)? { Some(x) } else { None }))
+    }
+
+    fn position<F>(&mut self, f: F) -> Result<Option<usize>, Self::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> bool,
+    {
+        self.try_position(FnWrapper::new(f))
+    }
+
+    fn try_position<F, R>(&mut self, mut f: F) -> Result<Option<usize>, R::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        let mut n = 0;
+        self.try_find_map(|x| {
+            Ok(if f(x)? {
+                Some(n)
+            } else {
+                n += 1;
+                None
+            })
+        })
     }
 
     fn any<F, R>(&mut self, f: F) -> Result<bool, Self::Error>
@@ -221,12 +426,11 @@ pub trait TryIterator {
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
-        R: Try<Ok = bool, Error = Self::Error>,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
     {
-        Try::from_ok(
-            self.try_find_map(|x| Ok(if f(x)? { Some(()) } else { None }))?
-                .is_some(),
-        )
+        let x: Result<_, R::Error> = self.try_find_map(|x| Ok(if f(x)? { Some(()) } else { None }));
+        Try::from_ok(x?.is_some())
     }
 
     fn all<F, R>(&mut self, f: F) -> Result<bool, Self::Error>
@@ -241,16 +445,10 @@ pub trait TryIterator {
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
-        R: Try<Ok = bool, Error = Self::Error>,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
     {
         self.try_any(|x| Try::from_ok(!f(x)?))
-    }
-
-    fn enumerate(self) -> Enumerate<Self>
-    where
-        Self: Sized,
-    {
-        Enumerate::new(self)
     }
 
     fn count(self) -> Result<usize, Self::Error>
@@ -390,6 +588,264 @@ pub trait TryIterator {
         })
         .map(|x| x.map(|(_, x)| x))
     }
+
+    fn partial_cmp_by<I, F>(self, other: I, f: F) -> Result<Option<Ordering>, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> Option<Ordering>,
+        Self::Error: From<I::Error>,
+    {
+        self.try_partial_cmp_by(other, FnWrapper::new(f))
+    }
+
+    fn try_partial_cmp_by<I, F, R>(mut self, other: I, mut f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = Option<Ordering>>,
+        R::Error: From<Self::Error> + From<I::Error>,
+    {
+        let mut other = other.into_try_iter();
+        self.try_for_each(|x| match other.next().into_result() {
+            Ok(None) => LoopState::BreakValue(Some(Ordering::Greater)),
+            Ok(Some(y)) => match f(x, y).into_result() {
+                Ok(Some(Ordering::Equal)) => LoopState::Continue(()),
+                Ok(non_eq) => LoopState::BreakValue(non_eq),
+                Err(e) => LoopState::MapError(e),
+            },
+            Err(e) => LoopState::MapError(e.into()),
+        })
+        .try_map_continue(|()| match other.next().into_result() {
+            Ok(None) => Ok(Some(Ordering::Equal)),
+            Ok(Some(_)) => Ok(Some(Ordering::Less)),
+            Err(e) => Err(LoopBreak::MapError(e.into())),
+        })
+        .into_try()
+    }
+
+    fn cmp_by<I, F>(self, other: I, f: F) -> Result<Ordering, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> Ordering,
+        Self::Error: From<I::Error>,
+    {
+        self.try_cmp_by(other, FnWrapper::new(f))
+    }
+
+    fn try_cmp_by<I, F, R>(mut self, other: I, mut f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = Ordering>,
+        R::Error: From<Self::Error> + From<I::Error>,
+    {
+        let mut other = other.into_try_iter();
+        self.try_for_each(|x| match other.next().into_result() {
+            Ok(None) => LoopState::BreakValue(Ordering::Greater),
+            Ok(Some(y)) => match f(x, y).into_result() {
+                Ok(Ordering::Equal) => LoopState::Continue(()),
+                Ok(non_eq) => LoopState::BreakValue(non_eq),
+                Err(e) => LoopState::MapError(e),
+            },
+            Err(e) => LoopState::MapError(e.into()),
+        })
+        .try_map_continue(|()| match other.next().into_result() {
+            Ok(None) => Ok(Ordering::Equal),
+            Ok(Some(_)) => Ok(Ordering::Less),
+            Err(e) => Err(LoopBreak::MapError(e.into())),
+        })
+        .into_try()
+    }
+
+    fn eq_by<I, F>(self, other: I, f: F) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> bool,
+        Self::Error: From<I::Error>,
+    {
+        self.try_eq_by(other, FnWrapper::new(f))
+    }
+
+    fn try_eq_by<I, F, R>(mut self, other: I, mut f: F) -> R
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        F: FnMut(Self::Item, I::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error> + From<I::Error>,
+    {
+        let mut other = other.into_try_iter();
+        self.try_for_each(|x| match other.next().into_result() {
+            Ok(None) => LoopState::BreakValue(false),
+            Ok(Some(y)) => match f(x, y).into_result() {
+                Ok(true) => LoopState::Continue(()),
+                Ok(false) => LoopState::BreakValue(false),
+                Err(e) => LoopState::MapError(e),
+            },
+            Err(e) => LoopState::MapError(e.into()),
+        })
+        .try_map_continue(|()| match other.next().into_result() {
+            Ok(x) => Ok(x.is_none()),
+            Err(e) => Err(LoopBreak::MapError(e.into())),
+        })
+        .into_try()
+    }
+
+    fn partial_cmp<I>(self, other: I) -> Result<Option<Ordering>, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialOrd<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        self.partial_cmp_by(other, |a, b| a.partial_cmp(&b))
+    }
+
+    fn cmp<I>(self, other: I) -> Result<Ordering, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator<Item = Self::Item>,
+        Self::Item: Ord,
+        Self::Error: From<I::Error>,
+    {
+        self.cmp_by(other, |a, b| a.cmp(&b))
+    }
+
+    fn eq<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialEq<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        self.eq_by(other, |a, b| a.eq(&b))
+    }
+
+    fn lt<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialOrd<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Ok(self.partial_cmp(other)? == Some(Ordering::Less))
+    }
+
+    fn le<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialOrd<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Ok(match self.partial_cmp(other)? {
+            Some(Ordering::Less) | Some(Ordering::Equal) => true,
+            _ => false,
+        })
+    }
+
+    fn gt<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialOrd<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Ok(self.partial_cmp(other)? == Some(Ordering::Greater))
+    }
+
+    fn ge<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialOrd<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Ok(match self.partial_cmp(other)? {
+            Some(Ordering::Greater) | Some(Ordering::Equal) => true,
+            _ => false,
+        })
+    }
+
+    fn ne<I>(self, other: I) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        I: IntoTryIterator,
+        Self::Item: PartialEq<I::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Ok(!self.eq(other)?)
+    }
+
+    fn into_results(self) -> IntoResults<Self>
+    where
+        Self: Sized,
+    {
+        IntoResults::new(self)
+    }
+
+    fn collect<B>(self) -> Result<B, Self::Error>
+    where
+        Self: Sized,
+        B: FromIterator<Self::Item>,
+    {
+        self.into_results().collect()
+    }
+
+    fn sum<B>(self) -> Result<B, Self::Error>
+    where
+        Self: Sized,
+        B: Sum<Self::Item>,
+    {
+        self.into_results().sum()
+    }
+
+    fn product<B>(self) -> Result<B, Self::Error>
+    where
+        Self: Sized,
+        B: Product<Self::Item>,
+    {
+        self.into_results().product()
+    }
+
+    fn partition<B, F, R>(self, f: F) -> Result<(B, B), Self::Error>
+    where
+        Self: Sized,
+        B: Default + Extend<Self::Item>,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_partition(FnWrapper::new(f))
+    }
+
+    fn try_partition<B, F, R>(mut self, mut f: F) -> Result<(B, B), R::Error>
+    where
+        Self: Sized,
+        B: Default + Extend<Self::Item>,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        self.try_fold((B::default(), B::default()), |(mut a, mut b), i| {
+            if f(&i)? {
+                a.extend(Some(i));
+            } else {
+                b.extend(Some(i));
+            }
+            Ok((a, b))
+        })
+    }
+
+    fn by_ref(&mut self) -> &mut Self
+    where
+        Self: Sized,
+    {
+        self
+    }
 }
 
 fn select_fold1<I, F>(iter: I, f: F) -> Result<Option<I::Item>, I::Error>
@@ -433,16 +889,5 @@ where
 
     fn into_try_iter(self) -> Self::IntoTryIter {
         self
-    }
-}
-
-enum FoldStop<T, E> {
-    Break(T),
-    Err(E),
-}
-
-impl<T, E> From<E> for FoldStop<T, E> {
-    fn from(e: E) -> FoldStop<T, E> {
-        FoldStop::Err(e)
     }
 }

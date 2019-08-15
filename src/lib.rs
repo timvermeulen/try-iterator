@@ -1,4 +1,4 @@
-#![feature(try_trait, fn_traits, unboxed_closures)]
+#![feature(try_trait, fn_traits, never_type, unboxed_closures)]
 
 mod fn_wrapper;
 mod iterator_ext;

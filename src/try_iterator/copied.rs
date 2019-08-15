@@ -1,24 +1,25 @@
 use super::*;
 
-pub struct Enumerate<I> {
+pub struct Copied<I> {
     iter: I,
-    count: usize,
 }
 
-impl<I> Enumerate<I>
+impl<'a, I, T> Copied<I>
 where
-    I: TryIterator,
+    I: TryIterator<Item = &'a T>,
+    T: Copy + 'a,
 {
     pub(crate) fn new(iter: I) -> Self {
-        Self { iter, count: 0 }
+        Self { iter }
     }
 }
 
-impl<I> TryIterator for Enumerate<I>
+impl<'a, I, T> TryIterator for Copied<I>
 where
-    I: TryIterator,
+    I: TryIterator<Item = &'a T>,
+    T: Copy + 'a,
 {
-    type Item = (usize, I::Item);
+    type Item = T;
     type Error = I::Error;
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
@@ -31,11 +32,6 @@ where
         R: Try<Ok = Acc>,
         R::Error: From<Self::Error>,
     {
-        let count = &mut self.count;
-        self.iter.try_fold(acc, |acc, x| {
-            let c = *count;
-            *count += 1;
-            f(acc, (c, x))
-        })
+        self.iter.try_fold(acc, |acc, &x| f(acc, x))
     }
 }
