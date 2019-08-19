@@ -27,4 +27,8 @@ where
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         Ok(self.iter.next())
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
