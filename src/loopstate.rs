@@ -2,7 +2,7 @@ use super::*;
 
 pub enum LoopState<C, B, I, M> {
     Continue(C),
-    BreakValue(B),
+    Break(B),
     IterError(I),
     MapError(M),
 }
@@ -23,7 +23,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
         R: Try<Ok = B, Error = M>,
     {
         match r.into_result() {
-            Ok(x) => Self::BreakValue(x),
+            Ok(x) => Self::Break(x),
             Err(e) => Self::MapError(e),
         }
     }
@@ -44,13 +44,13 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
         LoopState::Continue(f(self?)?)
     }
 
-    pub fn map_break_value<F, T>(self, f: F) -> LoopState<C, T, I, M>
+    pub fn map_break<F, T>(self, f: F) -> LoopState<C, T, I, M>
     where
         F: FnOnce(B) -> T,
     {
         match self {
             Self::Continue(x) => LoopState::Continue(x),
-            Self::BreakValue(x) => LoopState::BreakValue(f(x)),
+            Self::Break(x) => LoopState::Break(f(x)),
             Self::IterError(e) => LoopState::IterError(e),
             Self::MapError(e) => LoopState::MapError(e),
         }
@@ -62,7 +62,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     {
         match self {
             Self::Continue(x) => LoopState::Continue(x),
-            Self::BreakValue(x) => LoopState::BreakValue(x),
+            Self::Break(x) => LoopState::Break(x),
             Self::IterError(e) => LoopState::IterError(f(e)),
             Self::MapError(e) => LoopState::MapError(e),
         }
@@ -75,7 +75,7 @@ where
 {
     pub fn into_try<R: Try<Ok = T, Error = M>>(self) -> R {
         match self {
-            Self::Continue(x) | Self::BreakValue(x) => Try::from_ok(x),
+            Self::Continue(x) | Self::Break(x) => Try::from_ok(x),
             Self::IterError(e) => Try::from_error(e.into()),
             Self::MapError(e) => Try::from_error(e),
         }
@@ -89,7 +89,7 @@ impl<C, B, I, M> Try for LoopState<C, B, I, M> {
     fn into_result(self) -> Result<Self::Ok, Self::Error> {
         match self {
             Self::Continue(x) => Ok(x),
-            Self::BreakValue(x) => Err(LoopBreak::Value(x)),
+            Self::Break(x) => Err(LoopBreak::Value(x)),
             Self::IterError(e) => Err(LoopBreak::IterError(e)),
             Self::MapError(e) => Err(LoopBreak::MapError(e)),
         }
@@ -97,7 +97,7 @@ impl<C, B, I, M> Try for LoopState<C, B, I, M> {
 
     fn from_error(e: Self::Error) -> Self {
         match e {
-            LoopBreak::Value(x) => Self::BreakValue(x),
+            LoopBreak::Value(x) => Self::Break(x),
             LoopBreak::IterError(e) => Self::IterError(e),
             LoopBreak::MapError(e) => Self::MapError(e),
         }

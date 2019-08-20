@@ -41,7 +41,7 @@ where
         self.iter
             .try_fold(acc, |acc, x| LoopState::continue_with_try(g(acc, x)))
             .map_iter_error(&mut self.f)
-            .map_break_value(|x: !| x)
+            .map_break(|x: !| x)
             .into_try()
     }
 }

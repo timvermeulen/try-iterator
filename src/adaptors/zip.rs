@@ -26,14 +26,29 @@ where
     type Error = A::Error;
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
-        match (self.a.next()?, self.b.next()?) {
-            (Some(x), Some(y)) => Ok(Some((x, y))),
-            _ => Ok(None),
-        }
+        let (x, y) = (self.a.next()?, self.b.next()?);
+        Ok(try { (x?, y?) })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         size_hint::min(self.a.size_hint(), self.b.size_hint())
+    }
+
+    fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        let b = &mut self.b;
+        self.a
+            .try_fold(acc, |acc, x| {
+                match b.map_err_mut(A::Error::from).next()? {
+                    None => LoopState::Break(acc),
+                    Some(y) => LoopState::continue_with_try(f(acc, (x, y))),
+                }
+            })
+            .into_try()
     }
 }
 

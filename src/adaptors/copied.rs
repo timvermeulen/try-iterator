@@ -30,6 +30,10 @@ where
         self.iter.size_hint()
     }
 
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        try { self.iter.try_nth(n)?.map(|&x| x) }
+    }
+
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,

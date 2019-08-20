@@ -50,6 +50,20 @@ where
         size_hint::add(self.iter.size_hint(), peeked_len)
     }
 
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        match self.peeked.take() {
+            Some(None) => Ok(Err(n)),
+            Some(Some(x)) => {
+                if n == 0 {
+                    Ok(Ok(x))
+                } else {
+                    self.iter.try_nth(n - 1)
+                }
+            }
+            None => self.iter.try_nth(n),
+        }
+    }
+
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,

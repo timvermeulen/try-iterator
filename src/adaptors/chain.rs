@@ -46,6 +46,22 @@ where
         }
     }
 
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        try {
+            match self.state {
+                State::Both => match self.a.try_nth(n)? {
+                    Ok(x) => Ok(x),
+                    Err(n) => {
+                        self.state = State::Back;
+                        self.b.try_nth(n)?
+                    }
+                },
+                State::Front => self.a.try_nth(n)?,
+                State::Back => self.b.try_nth(n)?,
+            }
+        }
+    }
+
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,

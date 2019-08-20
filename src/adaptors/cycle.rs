@@ -34,6 +34,16 @@ where
         }
     }
 
+    fn try_nth(&mut self, mut n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        loop {
+            n = match self.current.try_nth(n)? {
+                Ok(x) => return Ok(Ok(x)),
+                Err(n) => n,
+            };
+            self.current = self.iter.clone();
+        }
+    }
+
     fn try_fold<Acc, F, R>(&mut self, mut acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,

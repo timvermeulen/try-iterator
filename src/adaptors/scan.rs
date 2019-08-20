@@ -47,7 +47,7 @@ where
         self.iter
             .map_err_mut(Self::Error::from)
             .try_fold(acc, move |acc, x| match f(state, x)? {
-                None => LoopState::BreakValue(acc),
+                None => LoopState::Break(acc),
                 Some(x) => LoopState::continue_with_try(g(acc, x)),
             })
             .into_try()

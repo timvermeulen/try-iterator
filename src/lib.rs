@@ -1,4 +1,11 @@
-#![feature(try_trait, fn_traits, never_type, unboxed_closures, try_blocks)]
+#![feature(
+    try_trait,
+    fn_traits,
+    never_type,
+    unboxed_closures,
+    try_blocks,
+    mem_take
+)]
 
 mod adaptors;
 mod fn_wrapper;
@@ -19,6 +26,7 @@ use size_hint::SizeHintExt;
 
 use std::cmp::{self, Ordering};
 use std::marker::PhantomData;
+use std::mem;
 use std::ops::Try;
 
 trait OptionExt<T> {

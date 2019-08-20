@@ -63,7 +63,7 @@ where
                     LoopState::continue_with_try(g(acc, x))
                 } else {
                     *flag = true;
-                    LoopState::BreakValue(acc)
+                    LoopState::Break(acc)
                 }
             })
             .into_try()

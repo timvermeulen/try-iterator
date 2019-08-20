@@ -311,7 +311,7 @@ pub trait TryIterator {
     {
         self.try_for_each(|x| match f(x).into_result() {
             Ok(None) => LoopState::Continue(()),
-            Ok(Some(x)) => LoopState::BreakValue(Some(x)),
+            Ok(Some(x)) => LoopState::Break(Some(x)),
             Err(e) => LoopState::MapError(e),
         })
         .map_continue(|()| None)
@@ -413,14 +413,18 @@ pub trait TryIterator {
         self.fold(None, |_, x| Some(x))
     }
 
-    fn nth(&mut self, mut n: usize) -> Result<Option<Self::Item>, Self::Error> {
+    fn nth(&mut self, n: usize) -> Result<Option<Self::Item>, Self::Error> {
+        self.try_nth(n).map(|x| x.ok())
+    }
+
+    fn try_nth(&mut self, mut n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
         while let Some(e) = self.next()? {
             if n == 0 {
-                return Ok(Some(e));
+                return Ok(Ok(e));
             }
             n -= 1;
         }
-        Ok(None)
+        Ok(Err(n))
     }
 
     fn map_err<F, E>(self, f: F) -> MapErr<Self, F>
@@ -557,10 +561,10 @@ pub trait TryIterator {
     {
         let mut other = other.into_try_iter();
         self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::BreakValue(Some(Ordering::Greater)),
+            Ok(None) => LoopState::Break(Some(Ordering::Greater)),
             Ok(Some(y)) => match f(x, y).into_result() {
                 Ok(Some(Ordering::Equal)) => LoopState::Continue(()),
-                Ok(non_eq) => LoopState::BreakValue(non_eq),
+                Ok(non_eq) => LoopState::Break(non_eq),
                 Err(e) => LoopState::MapError(e),
             },
             Err(e) => LoopState::MapError(e.into()),
@@ -593,10 +597,10 @@ pub trait TryIterator {
     {
         let mut other = other.into_try_iter();
         self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::BreakValue(Ordering::Greater),
+            Ok(None) => LoopState::Break(Ordering::Greater),
             Ok(Some(y)) => match f(x, y).into_result() {
                 Ok(Ordering::Equal) => LoopState::Continue(()),
-                Ok(non_eq) => LoopState::BreakValue(non_eq),
+                Ok(non_eq) => LoopState::Break(non_eq),
                 Err(e) => LoopState::MapError(e),
             },
             Err(e) => LoopState::MapError(e.into()),
@@ -629,10 +633,10 @@ pub trait TryIterator {
     {
         let mut other = other.into_try_iter();
         self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::BreakValue(false),
+            Ok(None) => LoopState::Break(false),
             Ok(Some(y)) => match f(x, y).into_result() {
                 Ok(true) => LoopState::Continue(()),
-                Ok(false) => LoopState::BreakValue(false),
+                Ok(false) => LoopState::Break(false),
                 Err(e) => LoopState::MapError(e),
             },
             Err(e) => LoopState::MapError(e.into()),

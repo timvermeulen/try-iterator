@@ -79,6 +79,18 @@ where
         (lower, upper)
     }
 
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        self.iter_try_fold(n, |n, iter| {
+            match iter.map_err_mut(I::Error::from).try_nth(n)? {
+                Ok(x) => LoopState::Break(x),
+                Err(n) => LoopState::Continue(n),
+            }
+        })
+        .map_continue(Err)
+        .map_break(Ok)
+        .into_try()
+    }
+
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,

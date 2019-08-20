@@ -29,6 +29,17 @@ where
         size_hint::sub(self.iter.size_hint(), self.n)
     }
 
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        if self.n == 0 {
+            self.iter.try_nth(n)
+        } else {
+            match self.iter.try_nth(mem::take(&mut self.n) - 1)? {
+                Ok(_) => self.iter.try_nth(n),
+                Err(_) => Ok(Err(n)),
+            }
+        }
+    }
+
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,
