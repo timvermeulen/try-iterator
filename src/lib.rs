@@ -4,7 +4,8 @@
     never_type,
     unboxed_closures,
     try_blocks,
-    mem_take
+    mem_take,
+    specialization
 )]
 
 mod adaptors;
