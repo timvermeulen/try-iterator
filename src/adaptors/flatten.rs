@@ -21,16 +21,16 @@ where
         }
     }
 
-    fn iter_try_fold<Acc, Fold, R>(&mut self, mut acc: Acc, mut fold: Fold) -> R
+    fn iter_try_fold<Acc, F, R>(&mut self, mut acc: Acc, mut f: F) -> R
     where
-        Fold: FnMut(Acc, &mut U) -> R,
+        F: FnMut(Acc, &mut U) -> R,
         R: Try<Ok = Acc>,
         R::Error: From<I::Error>,
     {
         let mut fold = |acc, iter: &mut _| -> R {
             let acc = match iter {
                 None => acc,
-                Some(ref mut iter) => fold(acc, iter)?,
+                Some(ref mut iter) => f(acc, iter)?,
             };
             *iter = None;
             Try::from_ok(acc)
@@ -40,6 +40,40 @@ where
 
         let front = &mut self.front;
         acc = self.iter.try_fold(acc, |acc, iter| {
+            *front = Some(iter.into_try_iter());
+            fold(acc, front)
+        })?;
+
+        fold(acc, &mut self.back)
+    }
+}
+
+impl<I, U> Flatten<I, U>
+where
+    I: DoubleEndedTryIterator,
+    U: DoubleEndedTryIterator,
+    I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
+    I::Error: From<U::Error>,
+{
+    fn iter_try_rfold<Acc, F, R>(&mut self, mut acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, &mut U) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<I::Error>,
+    {
+        let mut fold = |acc, iter: &mut _| -> R {
+            let acc = match iter {
+                None => acc,
+                Some(ref mut iter) => f(acc, iter)?,
+            };
+            *iter = None;
+            Try::from_ok(acc)
+        };
+
+        acc = fold(acc, &mut self.front)?;
+
+        let front = &mut self.front;
+        acc = self.iter.try_rfold(acc, |acc, iter| {
             *front = Some(iter.into_try_iter());
             fold(acc, front)
         })?;
@@ -99,6 +133,41 @@ where
     {
         self.iter_try_fold(acc, move |acc, iter| {
             iter.map_err_mut(From::from).try_fold(acc, &mut f)
+        })
+    }
+}
+
+impl<I, U> DoubleEndedTryIterator for Flatten<I, U>
+where
+    I: DoubleEndedTryIterator,
+    U: DoubleEndedTryIterator,
+    I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
+    I::Error: From<U::Error>,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        self.iter_try_rfold(n, |n, iter| {
+            match iter.map_err_mut(I::Error::from).try_nth_back(n)? {
+                Ok(x) => LoopState::Break(x),
+                Err(n) => LoopState::Continue(n),
+            }
+        })
+        .map_continue(Err)
+        .map_break(Ok)
+        .into_try()
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        self.iter_try_rfold(acc, move |acc, iter| {
+            iter.map_err_mut(From::from).try_rfold(acc, &mut f)
         })
     }
 }

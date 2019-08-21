@@ -35,13 +35,12 @@ where
             self.iter.try_nth(n)
         } else {
             let k = mem::take(&mut self.n);
-            let n = if k > 0 {
-                match self.iter.try_nth(k - 1)? {
+            let n = match k {
+                0 => n,
+                k => match self.iter.try_nth(k - 1)? {
                     Ok(_) => n - k,
-                    Err(m) => n - k + m,
-                }
-            } else {
-                n
+                    Err(m) => n - k + m + 1,
+                },
             };
             Ok(Err(n))
         }
@@ -69,6 +68,51 @@ where
                 }
             })
             .into_try()
+    }
+}
+
+impl<I> DoubleEndedTryIterator for Take<I>
+where
+    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        let len = self.iter.len();
+        if self.n > n {
+            let m = len.saturating_sub(self.n) + n;
+            self.n -= n + 1;
+            self.iter.try_nth_back(m)
+        } else {
+            let n = match len {
+                0 => n,
+                len => match self.iter.try_nth_back(len - 1)? {
+                    Ok(_) => n - self.n,
+                    Err(k) => n - self.n + k + 1,
+                },
+            };
+            Ok(Err(n))
+        }
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        if self.n == 0 {
+            Try::from_ok(acc)
+        } else {
+            let len = self.iter.len();
+            if len > self.n && self.iter.nth_back(len - self.n - 1)?.is_none() {
+                Try::from_ok(acc)
+            } else {
+                self.iter.try_rfold(acc, f)
+            }
+        }
     }
 }
 

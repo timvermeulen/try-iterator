@@ -30,10 +30,6 @@ where
         self.iter.size_hint()
     }
 
-    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        try { self.iter.try_nth(n)?.map(|x| x.clone()) }
-    }
-
     fn try_fold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,
@@ -41,6 +37,25 @@ where
         R::Error: From<Self::Error>,
     {
         self.iter.try_fold(acc, |acc, x| f(acc, x.clone()))
+    }
+}
+
+impl<'a, I, T> DoubleEndedTryIterator for Cloned<I>
+where
+    I: DoubleEndedTryIterator<Item = &'a T>,
+    T: Clone + 'a,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        self.iter.try_rfold(acc, |acc, x| f(acc, x.clone()))
     }
 }
 

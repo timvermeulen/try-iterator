@@ -12,247 +12,18 @@ pub trait TryIterator {
         (0, None)
     }
 
-    fn filter<F>(self, f: F) -> Filter<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> bool,
-    {
-        self.try_filter(FnWrapper::new(f))
+    fn nth(&mut self, n: usize) -> Result<Option<Self::Item>, Self::Error> {
+        self.try_nth(n).map(|x| x.ok())
     }
 
-    fn try_filter<F, R>(self, f: F) -> Filter<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = bool>,
-        R::Error: From<Self::Error>,
-    {
-        Filter::new(self, f)
-    }
-
-    fn inspect<F>(self, f: F) -> Inspect<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item),
-    {
-        self.try_inspect(FnWrapper::new(f))
-    }
-
-    fn try_inspect<F, R>(self, f: F) -> Inspect<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = ()>,
-        R::Error: From<Self::Error>,
-    {
-        Inspect::new(self, f)
-    }
-
-    fn map<F, R, T>(self, f: F) -> Map<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> T,
-    {
-        self.try_map(FnWrapper::new(f))
-    }
-
-    fn try_map<F, R>(self, f: F) -> Map<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> R,
-        R: Try,
-        R::Error: From<Self::Error>,
-    {
-        Map::new(self, f)
-    }
-
-    fn filter_map<F, R, T>(self, f: F) -> FilterMap<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> Option<T>,
-    {
-        self.try_filter_map(FnWrapper::new(f))
-    }
-
-    fn try_filter_map<F, R, T>(self, f: F) -> FilterMap<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> R,
-        R: Try<Ok = Option<T>>,
-        R::Error: From<Self::Error>,
-    {
-        FilterMap::new(self, f)
-    }
-
-    fn flat_map<F, R, U>(
-        self,
-        f: F,
-    ) -> Flatten<Map<Self, FnWrapper<F, Self::Error>>, U::IntoTryIter>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> U,
-        U: IntoTryIterator,
-        Self::Error: From<U::Error>,
-    {
-        self.try_flat_map(FnWrapper::new(f))
-    }
-
-    fn try_flat_map<F, R, U>(self, f: F) -> Flatten<Map<Self, F>, U::IntoTryIter>
-    where
-        Self: Sized,
-        F: FnMut(Self::Item) -> R,
-        R: Try<Ok = U>,
-        U: IntoTryIterator,
-        R::Error: From<Self::Error> + From<U::Error>,
-    {
-        self.try_map(f).flatten()
-    }
-
-    fn flatten<I>(self) -> Flatten<Self, I>
-    where
-        Self: Sized,
-        Self::Item: IntoTryIterator<Item = I::Item, Error = I::Error, IntoTryIter = I>,
-        Self::Error: From<I::Error>,
-        I: TryIterator,
-    {
-        Flatten::new(self)
-    }
-
-    fn zip<I>(self, other: I) -> Zip<Self, I>
-    where
-        Self: Sized,
-        I: TryIterator,
-        Self::Error: From<I::Error>,
-    {
-        Zip::new(self, other)
-    }
-
-    fn chain<I>(self, other: I) -> Chain<Self, I>
-    where
-        Self: Sized,
-        I: TryIterator<Item = Self::Item>,
-        Self::Error: From<I::Error>,
-    {
-        Chain::new(self, other)
-    }
-
-    fn take(self, n: usize) -> Take<Self>
-    where
-        Self: Sized,
-    {
-        Take::new(self, n)
-    }
-
-    fn take_while<F>(self, f: F) -> TakeWhile<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> bool,
-    {
-        self.try_take_while(FnWrapper::new(f))
-    }
-
-    fn try_take_while<F, R>(self, f: F) -> TakeWhile<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = bool>,
-        R::Error: From<Self::Error>,
-    {
-        TakeWhile::new(self, f)
-    }
-
-    fn skip(self, n: usize) -> Skip<Self>
-    where
-        Self: Sized,
-    {
-        Skip::new(self, n)
-    }
-
-    fn skip_while<F>(self, f: F) -> SkipWhile<Self, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> bool,
-    {
-        self.try_skip_while(FnWrapper::new(f))
-    }
-
-    fn try_skip_while<F, R>(self, f: F) -> SkipWhile<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = bool>,
-        R::Error: From<Self::Error>,
-    {
-        SkipWhile::new(self, f)
-    }
-
-    fn scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, FnWrapper<F, Self::Error>>
-    where
-        Self: Sized,
-        F: FnMut(&mut St, Self::Item) -> Option<T>,
-    {
-        Scan::new(self, state, FnWrapper::new(f))
-    }
-
-    fn try_scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, F>
-    where
-        Self: Sized,
-        F: FnMut(&mut St, Self::Item) -> R,
-        R: Try<Ok = Option<T>>,
-        R::Error: From<Self::Error>,
-    {
-        Scan::new(self, state, f)
-    }
-
-    fn cycle(self) -> Cycle<Self>
-    where
-        Self: Sized + Clone,
-    {
-        Cycle::new(self)
-    }
-
-    fn cloned<'a, T>(self) -> Cloned<Self>
-    where
-        Self: Sized + TryIterator<Item = &'a T>,
-        T: Clone + 'a,
-    {
-        Cloned::new(self)
-    }
-
-    fn copied<'a, T>(self) -> Copied<Self>
-    where
-        Self: Sized + TryIterator<Item = &'a T>,
-        T: Copy + 'a,
-    {
-        Copied::new(self)
-    }
-
-    fn enumerate(self) -> Enumerate<Self>
-    where
-        Self: Sized,
-    {
-        Enumerate::new(self)
-    }
-
-    fn fuse(self) -> Fuse<Self>
-    where
-        Self: Sized,
-    {
-        Fuse::new(self)
-    }
-
-    fn peekable(self) -> Peekable<Self>
-    where
-        Self: Sized,
-    {
-        Peekable::new(self)
-    }
-
-    fn step_by(self, n: usize) -> StepBy<Self>
-    where
-        Self: Sized,
-    {
-        StepBy::new(self, n)
+    fn try_nth(&mut self, mut n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        while let Some(e) = self.next()? {
+            if n == 0 {
+                return Ok(Ok(e));
+            }
+            n -= 1;
+        }
+        Ok(Err(n))
     }
 
     fn fold<Acc, F>(mut self, acc: Acc, mut f: F) -> Result<Acc, Self::Error>
@@ -411,36 +182,6 @@ pub trait TryIterator {
         Self: Sized,
     {
         self.fold(None, |_, x| Some(x))
-    }
-
-    fn nth(&mut self, n: usize) -> Result<Option<Self::Item>, Self::Error> {
-        self.try_nth(n).map(|x| x.ok())
-    }
-
-    fn try_nth(&mut self, mut n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        while let Some(e) = self.next()? {
-            if n == 0 {
-                return Ok(Ok(e));
-            }
-            n -= 1;
-        }
-        Ok(Err(n))
-    }
-
-    fn map_err<F, E>(self, f: F) -> MapErr<Self, F>
-    where
-        Self: Sized,
-        F: FnMut(Self::Error) -> E,
-    {
-        MapErr::new(self, f)
-    }
-
-    fn map_err_mut<'a, F, E>(&'a mut self, f: F) -> MapErrMut<'a, Self, F>
-    where
-        Self: Sized,
-        F: FnMut(Self::Error) -> E,
-    {
-        MapErrMut::new(self, f)
     }
 
     fn min(self) -> Result<Option<Self::Item>, Self::Error>
@@ -734,13 +475,6 @@ pub trait TryIterator {
         Ok(!self.eq(other)?)
     }
 
-    fn into_results(self) -> IntoResults<Self>
-    where
-        Self: Sized,
-    {
-        IntoResults::new(self)
-    }
-
     fn collect<B>(self) -> Result<B, Self::Error>
     where
         Self: Sized,
@@ -797,6 +531,272 @@ pub trait TryIterator {
         Self: Sized,
     {
         self
+    }
+
+    fn filter<F>(self, f: F) -> Filter<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_filter(FnWrapper::new(f))
+    }
+
+    fn try_filter<F, R>(self, f: F) -> Filter<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        Filter::new(self, f)
+    }
+
+    fn inspect<F>(self, f: F) -> Inspect<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item),
+    {
+        self.try_inspect(FnWrapper::new(f))
+    }
+
+    fn try_inspect<F, R>(self, f: F) -> Inspect<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = ()>,
+        R::Error: From<Self::Error>,
+    {
+        Inspect::new(self, f)
+    }
+
+    fn map<F, R, T>(self, f: F) -> Map<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> T,
+    {
+        self.try_map(FnWrapper::new(f))
+    }
+
+    fn try_map<F, R>(self, f: F) -> Map<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try,
+        R::Error: From<Self::Error>,
+    {
+        Map::new(self, f)
+    }
+
+    fn filter_map<F, R, T>(self, f: F) -> FilterMap<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> Option<T>,
+    {
+        self.try_filter_map(FnWrapper::new(f))
+    }
+
+    fn try_filter_map<F, R, T>(self, f: F) -> FilterMap<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = Option<T>>,
+        R::Error: From<Self::Error>,
+    {
+        FilterMap::new(self, f)
+    }
+
+    fn flat_map<F, R, U>(
+        self,
+        f: F,
+    ) -> Flatten<Map<Self, FnWrapper<F, Self::Error>>, U::IntoTryIter>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> U,
+        U: IntoTryIterator,
+        Self::Error: From<U::Error>,
+    {
+        self.try_flat_map(FnWrapper::new(f))
+    }
+
+    fn try_flat_map<F, R, U>(self, f: F) -> Flatten<Map<Self, F>, U::IntoTryIter>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = U>,
+        U: IntoTryIterator,
+        R::Error: From<Self::Error> + From<U::Error>,
+    {
+        self.try_map(f).flatten()
+    }
+
+    fn flatten<I>(self) -> Flatten<Self, I>
+    where
+        Self: Sized,
+        Self::Item: IntoTryIterator<Item = I::Item, Error = I::Error, IntoTryIter = I>,
+        Self::Error: From<I::Error>,
+        I: TryIterator,
+    {
+        Flatten::new(self)
+    }
+
+    fn zip<I>(self, other: I) -> Zip<Self, I>
+    where
+        Self: Sized,
+        I: TryIterator,
+        Self::Error: From<I::Error>,
+    {
+        Zip::new(self, other)
+    }
+
+    fn chain<I>(self, other: I) -> Chain<Self, I>
+    where
+        Self: Sized,
+        I: TryIterator<Item = Self::Item>,
+        Self::Error: From<I::Error>,
+    {
+        Chain::new(self, other)
+    }
+
+    fn take(self, n: usize) -> Take<Self>
+    where
+        Self: Sized,
+    {
+        Take::new(self, n)
+    }
+
+    fn take_while<F>(self, f: F) -> TakeWhile<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_take_while(FnWrapper::new(f))
+    }
+
+    fn try_take_while<F, R>(self, f: F) -> TakeWhile<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        TakeWhile::new(self, f)
+    }
+
+    fn skip(self, n: usize) -> Skip<Self>
+    where
+        Self: Sized,
+    {
+        Skip::new(self, n)
+    }
+
+    fn skip_while<F>(self, f: F) -> SkipWhile<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> bool,
+    {
+        self.try_skip_while(FnWrapper::new(f))
+    }
+
+    fn try_skip_while<F, R>(self, f: F) -> SkipWhile<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        SkipWhile::new(self, f)
+    }
+
+    fn scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&mut St, Self::Item) -> Option<T>,
+    {
+        Scan::new(self, state, FnWrapper::new(f))
+    }
+
+    fn try_scan<St, F, R, T>(self, state: St, f: F) -> Scan<Self, St, F>
+    where
+        Self: Sized,
+        F: FnMut(&mut St, Self::Item) -> R,
+        R: Try<Ok = Option<T>>,
+        R::Error: From<Self::Error>,
+    {
+        Scan::new(self, state, f)
+    }
+
+    fn cycle(self) -> Cycle<Self>
+    where
+        Self: Sized + Clone,
+    {
+        Cycle::new(self)
+    }
+
+    fn cloned<'a, T>(self) -> Cloned<Self>
+    where
+        Self: Sized + TryIterator<Item = &'a T>,
+        T: Clone + 'a,
+    {
+        Cloned::new(self)
+    }
+
+    fn copied<'a, T>(self) -> Copied<Self>
+    where
+        Self: Sized + TryIterator<Item = &'a T>,
+        T: Copy + 'a,
+    {
+        Copied::new(self)
+    }
+
+    fn enumerate(self) -> Enumerate<Self>
+    where
+        Self: Sized,
+    {
+        Enumerate::new(self)
+    }
+
+    fn fuse(self) -> Fuse<Self>
+    where
+        Self: Sized,
+    {
+        Fuse::new(self)
+    }
+
+    fn peekable(self) -> Peekable<Self>
+    where
+        Self: Sized,
+    {
+        Peekable::new(self)
+    }
+
+    fn step_by(self, n: usize) -> StepBy<Self>
+    where
+        Self: Sized,
+    {
+        StepBy::new(self, n)
+    }
+
+    fn map_err<F, E>(self, f: F) -> MapErr<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Error) -> E,
+    {
+        MapErr::new(self, f)
+    }
+
+    fn map_err_mut<'a, F, E>(&'a mut self, f: F) -> MapErrMut<'a, Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Error) -> E,
+    {
+        MapErrMut::new(self, f)
+    }
+
+    fn into_results(self) -> IntoResults<Self>
+    where
+        Self: Sized,
+    {
+        IntoResults::new(self)
     }
 }
 

@@ -56,4 +56,53 @@ where
     }
 }
 
+impl<I> DoubleEndedTryIterator for Skip<I>
+where
+    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        let len = self.len();
+        if n < len {
+            self.iter.try_nth_back(n)
+        } else {
+            let n = match len {
+                0 => n,
+                len => match self.iter.try_nth_back(len - 1)? {
+                    Ok(_) => n - len,
+                    Err(k) => n - len + k + 1,
+                },
+            };
+            Ok(Err(n))
+        }
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        let mut n = self.len();
+        if n == 0 {
+            Try::from_ok(acc)
+        } else {
+            self.iter
+                .try_rfold(acc, move |acc, x| {
+                    n -= 1;
+                    let r = f(acc, x);
+                    if n == 0 {
+                        LoopState::break_with_try(r)
+                    } else {
+                        LoopState::continue_with_try(r)
+                    }
+                })
+                .into_try()
+        }
+    }
+}
+
 impl<I> ExactSizeTryIterator for Skip<I> where I: ExactSizeTryIterator {}

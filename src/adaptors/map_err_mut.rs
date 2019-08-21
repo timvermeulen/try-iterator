@@ -46,6 +46,30 @@ where
     }
 }
 
+impl<I, F, E> DoubleEndedTryIterator for MapErrMut<'_, I, F>
+where
+    I: DoubleEndedTryIterator,
+    F: FnMut(I::Error) -> E,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_rfold<Acc, G, R>(&mut self, acc: Acc, mut g: G) -> R
+    where
+        Self: Sized,
+        G: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        self.iter
+            .try_rfold(acc, |acc, x| LoopState::continue_with_try(g(acc, x)))
+            .map_iter_error(&mut self.f)
+            .map_break(|x: !| x)
+            .into_try()
+    }
+}
+
 impl<I, F, E> ExactSizeTryIterator for MapErrMut<'_, I, F>
 where
     I: ExactSizeTryIterator,

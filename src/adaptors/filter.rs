@@ -51,3 +51,31 @@ where
         })
     }
 }
+
+impl<I, F, R> DoubleEndedTryIterator for Filter<I, F>
+where
+    I: DoubleEndedTryIterator,
+    F: FnMut(&I::Item) -> R,
+    R: Try<Ok = bool>,
+    R::Error: From<I::Error>,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_rfold<Acc, G, Q>(&mut self, acc: Acc, mut g: G) -> Q
+    where
+        G: FnMut(Acc, Self::Item) -> Q,
+        Q: Try<Ok = Acc>,
+        Q::Error: From<Self::Error>,
+    {
+        let f = &mut self.f;
+        self.iter.map_err_mut(From::from).try_rfold(acc, |acc, x| {
+            if f(&x)? {
+                g(acc, x)
+            } else {
+                Try::from_ok(acc)
+            }
+        })
+    }
+}

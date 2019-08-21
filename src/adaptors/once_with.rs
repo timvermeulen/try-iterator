@@ -30,6 +30,16 @@ where
     }
 }
 
+impl<F, R> DoubleEndedTryIterator for OnceWith<F>
+where
+    F: FnOnce() -> R,
+    R: Try,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.next()
+    }
+}
+
 impl<F, R> ExactSizeTryIterator for OnceWith<F>
 where
     F: FnOnce() -> R,

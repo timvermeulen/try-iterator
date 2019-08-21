@@ -52,4 +52,33 @@ where
     }
 }
 
+impl<I> DoubleEndedTryIterator for Enumerate<I>
+where
+    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        Ok(self
+            .iter
+            .try_nth_back(n)?
+            .map(|x| (self.count + self.len(), x)))
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        let mut count = self.count + self.iter.len();
+        self.iter.try_rfold(acc, move |acc, item| {
+            count -= 1;
+            f(acc, (count, item))
+        })
+    }
+}
+
 impl<I> ExactSizeTryIterator for Enumerate<I> where I: ExactSizeTryIterator {}

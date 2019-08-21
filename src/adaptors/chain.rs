@@ -79,3 +79,47 @@ where
         }
     }
 }
+
+impl<A, B> DoubleEndedTryIterator for Chain<A, B>
+where
+    A: DoubleEndedTryIterator,
+    B: DoubleEndedTryIterator<Item = A::Item>,
+    A::Error: From<B::Error>,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        try {
+            match self.state {
+                State::Both => match self.b.try_nth_back(n)? {
+                    Ok(x) => Ok(x),
+                    Err(n) => {
+                        self.state = State::Front;
+                        self.a.try_nth_back(n)?
+                    }
+                },
+                State::Front => self.a.try_nth_back(n)?,
+                State::Back => self.b.try_nth_back(n)?,
+            }
+        }
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        match self.state {
+            State::Both => {
+                let acc = self.b.map_err_mut(From::from).try_rfold(acc, &mut f)?;
+                self.state = State::Front;
+                self.a.try_rfold(acc, f)
+            }
+            State::Front => self.a.try_rfold(acc, f),
+            State::Back => self.b.map_err_mut(From::from).try_rfold(acc, f),
+        }
+    }
+}

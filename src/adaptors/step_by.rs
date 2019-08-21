@@ -49,6 +49,8 @@ where
         }
     }
 
+    // TODO: `try_nth`
+
     fn try_fold<Acc, F, R>(&mut self, mut acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, Self::Item) -> R,
@@ -64,6 +66,43 @@ where
         }
 
         from_fn(|| self.iter.nth(self.n)).try_fold(acc, f)
+    }
+}
+
+impl<I> DoubleEndedTryIterator for StepBy<I>
+where
+    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    // TODO: `try_nth_back`
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        let len = self.iter.len();
+        let rem = len % (self.n + 1);
+        let n = if self.first_take {
+            if rem == 0 {
+                self.n
+            } else {
+                rem - 1
+            }
+        } else {
+            rem
+        };
+
+        let acc = match self.iter.nth_back(n)? {
+            None => return Try::from_ok(acc),
+            Some(x) => f(acc, x)?,
+        };
+
+        from_fn(|| self.iter.nth_back(self.n)).try_fold(acc, f)
     }
 }
 

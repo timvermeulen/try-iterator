@@ -79,4 +79,44 @@ where
     }
 }
 
+impl<I> DoubleEndedTryIterator for Peekable<I>
+where
+    I: DoubleEndedTryIterator,
+{
+    fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.rfind(|_| true)
+    }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        Ok(match self.peeked.take() {
+            Some(None) => Err(n),
+            Some(Some(x)) => match self.iter.try_nth(n)? {
+                Ok(x) => Ok(x),
+                Err(0) => Ok(x),
+                Err(n) => Err(n),
+            },
+            None => self.iter.try_nth(n)?,
+        })
+    }
+
+    fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R
+    where
+        F: FnMut(Acc, Self::Item) -> R,
+        R: Try<Ok = Acc>,
+        R::Error: From<Self::Error>,
+    {
+        match self.peeked.take() {
+            Some(None) => return Try::from_ok(acc),
+            Some(Some(x)) => match self.iter.try_rfold(acc, &mut f).into_result() {
+                Ok(acc) => f(acc, x),
+                Err(e) => {
+                    self.peeked = Some(Some(x));
+                    Try::from_error(e)
+                }
+            },
+            None => self.iter.try_rfold(acc, f),
+        }
+    }
+}
+
 impl<I> ExactSizeTryIterator for Peekable<I> where I: ExactSizeTryIterator {}
