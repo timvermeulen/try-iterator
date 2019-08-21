@@ -7,13 +7,7 @@ pub struct Filter<I, P> {
 }
 
 impl<I, F> Filter<I, F> {
-    pub(crate) fn new<R>(iter: I, f: F) -> Self
-    where
-        I: TryIterator,
-        F: FnMut(&I::Item) -> R,
-        R: Try<Ok = bool>,
-        R::Error: From<I::Error>,
-    {
+    pub(crate) fn new(iter: I, f: F) -> Self {
         Self { iter, f }
     }
 }

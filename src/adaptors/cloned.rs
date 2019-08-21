@@ -5,11 +5,7 @@ pub struct Cloned<I> {
     iter: I,
 }
 
-impl<'a, I, T> Cloned<I>
-where
-    I: TryIterator<Item = &'a T>,
-    T: Clone + 'a,
-{
+impl<'a, I> Cloned<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
     }

@@ -7,10 +7,7 @@ pub struct StepBy<I> {
     first_take: bool,
 }
 
-impl<I> StepBy<I>
-where
-    I: TryIterator,
-{
+impl<I> StepBy<I> {
     pub(crate) fn new(iter: I, n: usize) -> Self {
         assert!(n != 0);
         Self {

@@ -5,10 +5,7 @@ pub struct Rev<I> {
     iter: I,
 }
 
-impl<I> Rev<I>
-where
-    I: DoubleEndedTryIterator,
-{
+impl<I> Rev<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
     }

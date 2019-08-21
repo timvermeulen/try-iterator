@@ -5,11 +5,7 @@ pub struct Copied<I> {
     iter: I,
 }
 
-impl<'a, I, T> Copied<I>
-where
-    I: TryIterator<Item = &'a T>,
-    T: Copy + 'a,
-{
+impl<'a, I> Copied<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
     }

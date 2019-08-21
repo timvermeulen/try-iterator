@@ -7,13 +7,7 @@ pub struct Flatten<I, U> {
     back: Option<U>,
 }
 
-impl<I, U> Flatten<I, U>
-where
-    I: TryIterator,
-    U: TryIterator,
-    I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
-    I::Error: From<U::Error>,
-{
+impl<I, U> Flatten<I, U> {
     pub(crate) fn new(iter: I) -> Self {
         Self {
             iter,
@@ -21,7 +15,15 @@ where
             back: None,
         }
     }
+}
 
+impl<I, U> Flatten<I, U>
+where
+    I: TryIterator,
+    U: TryIterator,
+    I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
+    I::Error: From<U::Error>,
+{
     fn iter_try_fold<Acc, F, R>(&mut self, mut acc: Acc, mut f: F) -> R
     where
         F: FnMut(Acc, &mut U) -> R,

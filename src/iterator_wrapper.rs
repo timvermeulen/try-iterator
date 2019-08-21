@@ -5,10 +5,7 @@ pub struct IteratorWrapper<I, E> {
     _marker: PhantomData<E>,
 }
 
-impl<I, E> IteratorWrapper<I, E>
-where
-    I: Iterator,
-{
+impl<I, E> IteratorWrapper<I, E> {
     pub(crate) fn new(iter: I) -> Self {
         Self {
             iter,
@@ -19,7 +16,7 @@ where
 
 impl<I, E> Clone for IteratorWrapper<I, E>
 where
-    I: Iterator + Clone,
+    I: Clone,
 {
     fn clone(&self) -> Self {
         Self::new(self.iter.clone())

@@ -7,13 +7,7 @@ pub struct Scan<I, St, F> {
     f: F,
 }
 
-impl<I, St, F, R, T> Scan<I, St, F>
-where
-    I: TryIterator,
-    F: FnMut(&mut St, I::Item) -> R,
-    R: Try<Ok = Option<T>>,
-    R::Error: From<I::Error>,
-{
+impl<I, St, F> Scan<I, St, F> {
     pub(crate) fn new(iter: I, state: St, f: F) -> Self {
         Self { iter, f, state }
     }

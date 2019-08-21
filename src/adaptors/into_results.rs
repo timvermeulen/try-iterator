@@ -5,10 +5,7 @@ pub struct IntoResults<I> {
     iter: I,
 }
 
-impl<I> IntoResults<I>
-where
-    I: TryIterator,
-{
+impl<I> IntoResults<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
     }

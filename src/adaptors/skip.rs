@@ -6,10 +6,7 @@ pub struct Skip<I> {
     n: usize,
 }
 
-impl<I> Skip<I>
-where
-    I: TryIterator,
-{
+impl<I> Skip<I> {
     pub(crate) fn new(iter: I, n: usize) -> Self {
         Self { iter, n }
     }

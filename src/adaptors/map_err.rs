@@ -7,11 +7,7 @@ pub struct MapErr<I, F> {
 }
 
 impl<I, F> MapErr<I, F> {
-    pub(crate) fn new<E>(iter: I, f: F) -> Self
-    where
-        I: TryIterator,
-        F: FnMut(I::Error) -> E,
-    {
+    pub(crate) fn new(iter: I, f: F) -> Self {
         Self { iter, f }
     }
 }

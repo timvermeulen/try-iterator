@@ -6,13 +6,7 @@ pub struct Inspect<I, F> {
     f: F,
 }
 
-impl<I, F, R> Inspect<I, F>
-where
-    I: TryIterator,
-    F: FnMut(&I::Item) -> R,
-    R: Try<Ok = ()>,
-    R::Error: From<I::Error>,
-{
+impl<I, F> Inspect<I, F> {
     pub(crate) fn new(iter: I, f: F) -> Self {
         Self { iter, f }
     }

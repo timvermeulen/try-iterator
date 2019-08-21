@@ -14,12 +14,7 @@ pub struct Chain<A, B> {
     state: State,
 }
 
-impl<A, B> Chain<A, B>
-where
-    A: TryIterator,
-    B: TryIterator<Item = A::Item>,
-    A::Error: From<B::Error>,
-{
+impl<A, B> Chain<A, B> {
     pub(crate) fn new(a: A, b: B) -> Self {
         let state = State::Both;
         Self { a, b, state }

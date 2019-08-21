@@ -6,10 +6,7 @@ pub struct Enumerate<I> {
     count: usize,
 }
 
-impl<I> Enumerate<I>
-where
-    I: TryIterator,
-{
+impl<I> Enumerate<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter, count: 0 }
     }

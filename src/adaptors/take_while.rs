@@ -7,13 +7,7 @@ pub struct TakeWhile<I, F> {
     flag: bool,
 }
 
-impl<I, F, R> TakeWhile<I, F>
-where
-    I: TryIterator,
-    F: FnMut(&I::Item) -> R,
-    R: Try<Ok = bool>,
-    R::Error: From<I::Error>,
-{
+impl<I, F> TakeWhile<I, F> {
     pub(crate) fn new(iter: I, f: F) -> Self {
         Self {
             iter,

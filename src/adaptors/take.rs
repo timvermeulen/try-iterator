@@ -6,10 +6,7 @@ pub struct Take<I> {
     n: usize,
 }
 
-impl<I> Take<I>
-where
-    I: TryIterator,
-{
+impl<I> Take<I> {
     pub(crate) fn new(iter: I, n: usize) -> Self {
         Self { iter, n }
     }

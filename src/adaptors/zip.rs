@@ -6,12 +6,7 @@ pub struct Zip<A, B> {
     b: B,
 }
 
-impl<A, B> Zip<A, B>
-where
-    A: TryIterator,
-    B: TryIterator,
-    A::Error: From<B::Error>,
-{
+impl<A, B> Zip<A, B> {
     pub(crate) fn new(a: A, b: B) -> Self {
         Self { a, b }
     }

@@ -6,10 +6,7 @@ pub struct Fuse<I> {
     done: bool,
 }
 
-impl<I> Fuse<I>
-where
-    I: TryIterator,
-{
+impl<I> Fuse<I> {
     pub(crate) fn new(iter: I) -> Fuse<I> {
         Fuse { iter, done: false }
     }
