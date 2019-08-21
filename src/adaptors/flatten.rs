@@ -30,7 +30,7 @@ where
         let mut fold = |acc, iter: &mut _| -> R {
             let acc = match iter {
                 None => acc,
-                Some(ref mut iter) => f(acc, iter)?,
+                Some(iter) => f(acc, iter)?,
             };
             *iter = None;
             Try::from_ok(acc)
@@ -64,7 +64,7 @@ where
         let mut fold = |acc, iter: &mut _| -> R {
             let acc = match iter {
                 None => acc,
-                Some(ref mut iter) => f(acc, iter)?,
+                Some(iter) => f(acc, iter)?,
             };
             *iter = None;
             Try::from_ok(acc)
@@ -170,4 +170,13 @@ where
             iter.map_err_mut(From::from).try_rfold(acc, &mut f)
         })
     }
+}
+
+impl<I, U> FusedTryIterator for Flatten<I, U>
+where
+    I: FusedTryIterator,
+    U: TryIterator,
+    I::Item: IntoTryIterator<Item = U::Item, Error = U::Error, IntoTryIter = U>,
+    I::Error: From<U::Error>,
+{
 }

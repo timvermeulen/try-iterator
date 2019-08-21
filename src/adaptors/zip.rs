@@ -59,3 +59,11 @@ where
     A::Error: From<B::Error>,
 {
 }
+
+impl<A, B> FusedTryIterator for Zip<A, B>
+where
+    A: FusedTryIterator,
+    B: FusedTryIterator,
+    A::Error: From<B::Error>,
+{
+}

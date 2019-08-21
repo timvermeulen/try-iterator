@@ -67,3 +67,12 @@ where
         self.iter.map_err_mut(From::from).try_fold(acc, g)
     }
 }
+
+impl<I, F, R> FusedTryIterator for SkipWhile<I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(&I::Item) -> R,
+    R: Try<Ok = bool>,
+    R::Error: From<I::Error>,
+{
+}

@@ -20,6 +20,21 @@ where
     }
 }
 
+impl<I> StepBy<I>
+where
+    I: ExactSizeTryIterator,
+{
+    fn next_back_index(&self) -> usize {
+        let len = self.iter.len();
+        let rem = len % (self.n + 1);
+        match (rem, self.first_take) {
+            (0, true) => self.n,
+            (rem, true) => rem - 1,
+            (rem, false) => rem,
+        }
+    }
+}
+
 impl<I> TryIterator for StepBy<I>
 where
     I: TryIterator,
@@ -85,19 +100,7 @@ where
         R: Try<Ok = Acc>,
         R::Error: From<Self::Error>,
     {
-        let len = self.iter.len();
-        let rem = len % (self.n + 1);
-        let n = if self.first_take {
-            if rem == 0 {
-                self.n
-            } else {
-                rem - 1
-            }
-        } else {
-            rem
-        };
-
-        let acc = match self.iter.nth_back(n)? {
+        let acc = match self.iter.nth_back(self.next_back_index())? {
             None => return Try::from_ok(acc),
             Some(x) => f(acc, x)?,
         };
@@ -107,3 +110,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for StepBy<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for StepBy<I> where I: FusedTryIterator {}

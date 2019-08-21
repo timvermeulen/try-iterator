@@ -82,3 +82,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Enumerate<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Enumerate<I> where I: FusedTryIterator {}

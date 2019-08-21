@@ -120,3 +120,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Peekable<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Peekable<I> where I: FusedTryIterator {}

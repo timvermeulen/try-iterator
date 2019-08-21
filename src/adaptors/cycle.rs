@@ -74,3 +74,5 @@ where
         }
     }
 }
+
+impl<I> FusedTryIterator for Cycle<I> where I: TryIterator + Clone {}

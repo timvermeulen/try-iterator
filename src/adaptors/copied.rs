@@ -73,3 +73,10 @@ where
     T: Copy + 'a,
 {
 }
+
+impl<'a, I, T> FusedTryIterator for Copied<I>
+where
+    I: FusedTryIterator<Item = &'a T>,
+    T: Copy + 'a,
+{
+}

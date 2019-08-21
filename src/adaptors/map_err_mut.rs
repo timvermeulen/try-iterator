@@ -76,3 +76,10 @@ where
     F: FnMut(I::Error) -> E,
 {
 }
+
+impl<I, F, E> FusedTryIterator for MapErrMut<'_, I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(I::Error) -> E,
+{
+}

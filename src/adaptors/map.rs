@@ -80,3 +80,12 @@ where
     R::Error: From<I::Error>,
 {
 }
+
+impl<I, F, R> FusedTryIterator for Map<I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(I::Item) -> R,
+    R: Try,
+    R::Error: From<I::Error>,
+{
+}

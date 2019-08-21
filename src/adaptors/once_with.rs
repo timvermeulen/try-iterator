@@ -52,3 +52,10 @@ where
         }
     }
 }
+
+impl<F, R> FusedTryIterator for OnceWith<F>
+where
+    F: FnOnce() -> R,
+    R: Try,
+{
+}

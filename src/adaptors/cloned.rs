@@ -65,3 +65,10 @@ where
     T: Clone + 'a,
 {
 }
+
+impl<'a, I, T> FusedTryIterator for Cloned<I>
+where
+    I: FusedTryIterator<Item = &'a T>,
+    T: Clone + 'a,
+{
+}

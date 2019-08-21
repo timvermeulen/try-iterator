@@ -106,3 +106,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Skip<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Skip<I> where I: FusedTryIterator {}

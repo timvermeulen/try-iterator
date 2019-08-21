@@ -67,3 +67,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Rev<I> where I: DoubleEndedTryIterator + ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Rev<I> where I: DoubleEndedTryIterator + FusedTryIterator {}

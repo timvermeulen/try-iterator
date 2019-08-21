@@ -2,7 +2,6 @@ use super::*;
 
 enum State {
     Both,
-    #[allow(unused)]
     Front,
     Back,
 }
@@ -122,4 +121,12 @@ where
             State::Back => self.b.map_err_mut(From::from).try_rfold(acc, f),
         }
     }
+}
+
+impl<A, B> FusedTryIterator for Chain<A, B>
+where
+    A: FusedTryIterator,
+    B: FusedTryIterator<Item = A::Item>,
+    A::Error: From<B::Error>,
+{
 }

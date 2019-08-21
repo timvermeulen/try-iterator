@@ -59,7 +59,7 @@ where
     R::Error: From<I::Error>,
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
-        self.find(|_| true)
+        self.rfind(|_| true)
     }
 
     fn try_rfold<Acc, G, Q>(&mut self, acc: Acc, mut g: G) -> Q
@@ -76,4 +76,13 @@ where
                 Some(x) => g(acc, x),
             })
     }
+}
+
+impl<I, F, R, T> FusedTryIterator for FilterMap<I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(I::Item) -> R,
+    R: Try<Ok = Option<T>>,
+    R::Error: From<I::Error>,
+{
 }

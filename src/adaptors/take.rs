@@ -117,3 +117,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Take<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Take<I> where I: FusedTryIterator {}

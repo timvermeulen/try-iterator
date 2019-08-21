@@ -90,3 +90,5 @@ where
 }
 
 impl<I> ExactSizeTryIterator for Fuse<I> where I: ExactSizeTryIterator {}
+
+impl<I> FusedTryIterator for Fuse<I> where I: TryIterator {}

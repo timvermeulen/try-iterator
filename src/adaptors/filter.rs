@@ -79,3 +79,12 @@ where
         })
     }
 }
+
+impl<I, F, R> FusedTryIterator for Filter<I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(&I::Item) -> R,
+    R: Try<Ok = bool>,
+    R::Error: From<I::Error>,
+{
+}

@@ -82,3 +82,12 @@ where
     R::Error: From<I::Error>,
 {
 }
+
+impl<I, F, R> FusedTryIterator for Inspect<I, F>
+where
+    I: FusedTryIterator,
+    F: FnMut(&I::Item) -> R,
+    R: Try<Ok = ()>,
+    R::Error: From<I::Error>,
+{
+}

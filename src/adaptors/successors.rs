@@ -1,5 +1,13 @@
 use super::*;
 
+pub fn successors<T, F, R>(first: Option<T>, f: F) -> Successors<T, F>
+where
+    F: FnMut(&T) -> R,
+    R: Try<Ok = Option<T>>,
+{
+    Successors { next: first, f }
+}
+
 pub struct Successors<T, F> {
     next: Option<T>,
     f: F,
@@ -28,10 +36,9 @@ where
     }
 }
 
-pub fn successors<T, F, R>(first: Option<T>, f: F) -> Successors<T, F>
+impl<T, F, R> FusedTryIterator for Successors<T, F>
 where
     F: FnMut(&T) -> R,
     R: Try<Ok = Option<T>>,
 {
-    Successors { next: first, f }
 }
