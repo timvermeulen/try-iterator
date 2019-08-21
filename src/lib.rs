@@ -26,6 +26,8 @@ use loopstate::{LoopBreak, LoopState};
 use size_hint::SizeHintExt;
 
 use std::cmp::{self, Ordering};
+use std::fmt::{self, Debug, Formatter};
+use std::iter::FusedIterator;
 use std::marker::PhantomData;
 use std::mem;
 use std::ops::Try;

@@ -14,6 +14,24 @@ impl<F, E> FnWrapper<F, E> {
     }
 }
 
+impl<F, E> Clone for FnWrapper<F, E>
+where
+    F: Clone,
+{
+    fn clone(&self) -> Self {
+        Self::new(self.f.clone())
+    }
+}
+
+impl<F, E> Debug for FnWrapper<F, E>
+where
+    F: Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FnWrapper").field("f", &self.f).finish()
+    }
+}
+
 impl<Args, F, E> FnOnce<Args> for FnWrapper<F, E>
 where
     F: FnOnce<Args>,
