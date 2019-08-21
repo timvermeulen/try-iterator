@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Flatten<I, U> {
     iter: I,
     front: Option<U>,

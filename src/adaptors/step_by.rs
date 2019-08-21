@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct StepBy<I> {
     iter: I,
     n: usize,

@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Filter<I, P> {
     iter: I,
     f: P,

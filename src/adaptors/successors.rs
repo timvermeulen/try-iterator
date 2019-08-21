@@ -8,6 +8,7 @@ where
     Successors { next: first, f }
 }
 
+#[derive(Clone, Debug)]
 pub struct Successors<T, F> {
     next: Option<T>,
     f: F,

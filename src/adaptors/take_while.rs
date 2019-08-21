@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct TakeWhile<I, F> {
     iter: I,
     f: F,

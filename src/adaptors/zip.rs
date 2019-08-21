@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Zip<A, B> {
     a: A,
     b: B,

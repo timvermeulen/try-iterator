@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Skip<I> {
     iter: I,
     n: usize,

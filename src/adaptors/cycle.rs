@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Cycle<I> {
     iter: I,
     current: I,

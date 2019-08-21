@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct SkipWhile<I, F> {
     iter: I,
     f: F,

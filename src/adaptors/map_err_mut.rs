@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug)]
 pub struct MapErrMut<'a, I, F> {
     iter: &'a mut I,
     f: F,

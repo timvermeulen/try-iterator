@@ -8,6 +8,7 @@ where
     RepeatWith { f }
 }
 
+#[derive(Clone, Debug)]
 pub struct RepeatWith<F> {
     f: F,
 }

@@ -1,11 +1,13 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 enum State {
     Both,
     Front,
     Back,
 }
 
+#[derive(Clone, Debug)]
 pub struct Chain<A, B> {
     a: A,
     b: B,

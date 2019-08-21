@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Fuse<I> {
     iter: I,
     done: bool,

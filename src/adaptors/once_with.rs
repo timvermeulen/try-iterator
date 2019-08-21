@@ -8,6 +8,7 @@ where
     OnceWith { f: Some(f) }
 }
 
+#[derive(Clone, Debug)]
 pub struct OnceWith<F> {
     f: Option<F>,
 }

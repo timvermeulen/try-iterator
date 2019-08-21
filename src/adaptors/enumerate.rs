@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Enumerate<I> {
     iter: I,
     count: usize,

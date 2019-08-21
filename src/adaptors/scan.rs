@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct Scan<I, St, F> {
     iter: I,
     state: St,
