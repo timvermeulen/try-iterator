@@ -203,6 +203,25 @@ pub trait IteratorExt: Iterator {
         IteratorWrapper::new(self).try_eq_by(other, f)
     }
 
+    fn try_is_sorted_by<F, R>(self, f: F) -> R
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item, &Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_is_sorted_by(f)
+    }
+
+    fn try_is_sorted_by_key<F, R, K>(self, f: F) -> Result<bool, R::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = K>,
+        K: PartialOrd,
+    {
+        IteratorWrapper::new(self).try_is_sorted_by_key(f)
+    }
+
     fn try_partition<B, F, R>(self, f: F) -> Result<(B, B), R::Error>
     where
         Self: Sized,
