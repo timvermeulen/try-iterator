@@ -583,6 +583,22 @@ pub trait TryIterator {
         })
     }
 
+    fn unzip<A, B, FromA, FromB>(self) -> Result<(FromA, FromB), Self::Error>
+    where
+        Self: Sized + TryIterator<Item = (A, B)>,
+        FromA: Default + Extend<A>,
+        FromB: Default + Extend<B>,
+    {
+        self.fold(
+            (Default::default(), Default::default()),
+            |(mut xs, mut ys), (x, y)| {
+                xs.extend(Some(x));
+                ys.extend(Some(y));
+                (xs, ys)
+            },
+        )
+    }
+
     fn by_ref(&mut self) -> &mut Self
     where
         Self: Sized,
