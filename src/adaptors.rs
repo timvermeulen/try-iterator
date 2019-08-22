@@ -26,6 +26,7 @@ mod step_by;
 mod successors;
 mod take;
 mod take_while;
+mod take_while_map;
 mod zip;
 
 pub use chain::Chain;
@@ -54,4 +55,5 @@ pub use step_by::StepBy;
 pub use successors::{successors, Successors};
 pub use take::Take;
 pub use take_while::TakeWhile;
+pub use take_while_map::TakeWhileMap;
 pub use zip::Zip;

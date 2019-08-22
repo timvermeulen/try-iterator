@@ -755,6 +755,24 @@ pub trait TryIterator {
         TakeWhile::new(self, f)
     }
 
+    fn take_while_map<F, T>(self, f: F) -> TakeWhileMap<Self, FnWrapper<F, Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> Option<T>,
+    {
+        self.try_take_while_map(FnWrapper::new(f))
+    }
+
+    fn try_take_while_map<F, R, T>(self, f: F) -> TakeWhileMap<Self, F>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = Option<T>>,
+        R::Error: From<Self::Error>,
+    {
+        TakeWhileMap::new(self, f)
+    }
+
     fn skip(self, n: usize) -> Skip<Self>
     where
         Self: Sized,
