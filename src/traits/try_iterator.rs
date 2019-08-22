@@ -475,6 +475,63 @@ pub trait TryIterator {
         Ok(!self.eq(other)?)
     }
 
+    fn is_sorted(self) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        Self::Item: PartialOrd,
+    {
+        self.is_sorted_by(|x, y| x <= y)
+    }
+
+    fn is_sorted_by<F>(self, f: F) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item, &Self::Item) -> bool,
+    {
+        self.try_is_sorted_by(FnWrapper::new(f))
+    }
+
+    fn try_is_sorted_by<F, R>(mut self, mut f: F) -> R
+    where
+        Self: Sized,
+        F: FnMut(&Self::Item, &Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        let first = match self.next()? {
+            Some(x) => x,
+            None => return Try::from_ok(true),
+        };
+
+        self.map_err(R::Error::from)
+            .try_fold(first, |x, y| match f(&x, &y)? {
+                true => LoopState::Continue(y),
+                false => LoopState::Break(false),
+            })
+            .map_continue(|_| true)
+            .into_try()
+    }
+
+    fn is_sorted_by_key<F, K>(self, f: F) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> K,
+        K: PartialOrd,
+    {
+        self.try_is_sorted_by_key(FnWrapper::new(f))
+    }
+
+    fn try_is_sorted_by_key<F, R, K>(self, f: F) -> Result<bool, R::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = K>,
+        R::Error: From<Self::Error>,
+        K: PartialOrd,
+    {
+        self.try_map(f).is_sorted()
+    }
+
     fn collect<B>(self) -> Result<B, Self::Error>
     where
         Self: Sized,
@@ -569,7 +626,7 @@ pub trait TryIterator {
         Inspect::new(self, f)
     }
 
-    fn map<F, R, T>(self, f: F) -> Map<Self, FnWrapper<F, Self::Error>>
+    fn map<F, T>(self, f: F) -> Map<Self, FnWrapper<F, Self::Error>>
     where
         Self: Sized,
         F: FnMut(Self::Item) -> T,
