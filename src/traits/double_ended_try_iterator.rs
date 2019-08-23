@@ -124,6 +124,40 @@ pub trait DoubleEndedTryIterator: TryIterator {
         })
     }
 
+    fn partition_in_place<'a, T: 'a, F>(self, f: F) -> Result<usize, Self::Error>
+    where
+        Self: Sized + DoubleEndedTryIterator<Item = &'a mut T>,
+        F: FnMut(&T) -> bool,
+    {
+        self.try_partition_in_place(FnWrapper::new(f))
+    }
+
+    fn try_partition_in_place<'a, T: 'a, F, R>(mut self, mut f: F) -> Result<usize, R::Error>
+    where
+        Self: Sized + DoubleEndedTryIterator<Item = &'a mut T>,
+        F: FnMut(&T) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        let mut f = |x: &&mut _| f(&**x);
+        let mut true_count = 0;
+
+        while let Some(head) = self.try_find(|x| {
+            let p = f(x)?;
+            true_count += p as usize;
+            Ok::<_, R::Error>(!p)
+        })? {
+            if let Some(tail) = self.try_rfind(&mut f)? {
+                mem::swap(head, tail);
+                true_count += 1;
+            } else {
+                break;
+            }
+        }
+
+        Try::from_ok(true_count)
+    }
+
     fn rev(self) -> Rev<Self>
     where
         Self: Sized,

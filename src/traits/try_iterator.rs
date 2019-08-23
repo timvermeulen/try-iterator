@@ -583,6 +583,24 @@ pub trait TryIterator {
         })
     }
 
+    fn is_partitioned<F>(self, f: F) -> Result<bool, Self::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> bool,
+    {
+        self.try_is_partitioned(FnWrapper::new(f))
+    }
+
+    fn try_is_partitioned<F, R>(mut self, mut f: F) -> R
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = bool>,
+        R::Error: From<Self::Error>,
+    {
+        try { self.try_all(&mut f)? || !self.try_any(f)? }
+    }
+
     fn unzip<A, B, FromA, FromB>(self) -> Result<(FromA, FromB), Self::Error>
     where
         Self: Sized + TryIterator<Item = (A, B)>,

@@ -231,6 +231,24 @@ pub trait IteratorExt: Iterator {
     {
         IteratorWrapper::new(self).try_partition(f)
     }
+
+    fn try_partition_in_place<'a, T: 'a, F, R>(self, f: F) -> Result<usize, R::Error>
+    where
+        Self: Sized + DoubleEndedIterator<Item = &'a mut T>,
+        F: FnMut(&T) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_partition_in_place(f)
+    }
+
+    fn try_is_partitioned<F, R>(self, f: F) -> R
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> R,
+        R: Try<Ok = bool>,
+    {
+        IteratorWrapper::new(self).try_is_partitioned(f)
+    }
 }
 
 impl<I> IteratorExt for I where I: Iterator {}
