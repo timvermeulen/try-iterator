@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Clone, Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct TakeWhileMap<I, F> {
     iter: I,
     f: F,

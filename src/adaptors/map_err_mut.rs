@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct MapErrMut<'a, I, F> {
     iter: &'a mut I,
     f: F,

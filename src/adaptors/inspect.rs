@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Inspect<I, F> {
     iter: I,
     f: F,

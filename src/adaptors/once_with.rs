@@ -9,6 +9,7 @@ where
 }
 
 #[derive(Clone, Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct OnceWith<F> {
     f: Option<F>,
 }

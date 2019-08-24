@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug)]
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Flatten<I, U> {
     iter: I,
     front: Option<U>,
