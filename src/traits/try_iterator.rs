@@ -1,6 +1,6 @@
 use super::*;
 
-use std::iter::{FromIterator, Product, Sum};
+use core::iter::{FromIterator, Product, Sum};
 
 pub trait TryIterator {
     type Item;

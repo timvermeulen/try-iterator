@@ -1,3 +1,4 @@
+#![no_std]
 #![feature(
     try_trait,
     fn_traits,
@@ -25,12 +26,12 @@ use iterator_wrapper::IteratorWrapper;
 use loopstate::{LoopBreak, LoopState};
 use size_hint::SizeHintExt;
 
-use std::cmp::{self, Ordering};
-use std::fmt::{self, Debug, Formatter};
-use std::iter::FusedIterator;
-use std::marker::PhantomData;
-use std::mem;
-use std::ops::Try;
+use core::cmp::{self, Ordering};
+use core::fmt::{self, Debug, Formatter};
+use core::iter::FusedIterator;
+use core::marker::PhantomData;
+use core::mem;
+use core::ops::Try;
 
 trait OptionExt<T> {
     fn try_map<F, R>(self, f: F) -> Result<Option<R::Ok>, R::Error>

@@ -139,17 +139,17 @@ pub trait DoubleEndedTryIterator: TryIterator {
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        let mut f = |x: &&mut _| f(&**x);
         let mut true_count = 0;
+        let mut f = |x: &&mut _| {
+            f(&**x).into_result().map(|x| {
+                true_count += x as usize;
+                x
+            })
+        };
 
-        while let Some(head) = self.try_find(|x| {
-            let p = f(x)?;
-            true_count += p as usize;
-            Ok::<_, R::Error>(!p)
-        })? {
+        while let Some(head) = self.try_find(|x| f(x).map(|x| !x))? {
             if let Some(tail) = self.try_rfind(&mut f)? {
                 mem::swap(head, tail);
-                true_count += 1;
             } else {
                 break;
             }
