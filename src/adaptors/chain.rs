@@ -75,6 +75,29 @@ where
             State::Back => self.b.map_err_mut(From::from).try_fold(acc, f),
         }
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        try {
+            match self.state {
+                State::Both => self.a.count()? + self.b.count()?,
+                State::Front => self.a.count()?,
+                State::Back => self.b.count()?,
+            }
+        }
+    }
+
+    fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        try {
+            match self.state {
+                State::Both => {
+                    let x = self.a.last()?;
+                    self.b.last()?.or(x)
+                }
+                State::Front => self.a.last()?,
+                State::Back => self.b.last()?,
+            }
+        }
+    }
 }
 
 impl<A, B> DoubleEndedTryIterator for Chain<A, B>

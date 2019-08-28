@@ -40,6 +40,14 @@ where
     {
         self.iter.try_fold(acc, |acc, &x| f(acc, x))
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        self.iter.count()
+    }
+
+    fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        try { self.iter.last()?.map(|&x| x) }
+    }
 }
 
 impl<'a, I, T> DoubleEndedTryIterator for Copied<I>

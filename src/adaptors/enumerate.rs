@@ -49,6 +49,10 @@ where
             f(acc, (c, x))
         })
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        self.iter.count()
+    }
 }
 
 impl<I> DoubleEndedTryIterator for Enumerate<I>

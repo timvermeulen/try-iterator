@@ -54,6 +54,22 @@ where
             acc
         })
     }
+
+    default fn count(self) -> Result<usize, Self::Error> {
+        if self.done {
+            Ok(0)
+        } else {
+            self.iter.count()
+        }
+    }
+
+    default fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        if self.done {
+            Ok(None)
+        } else {
+            self.iter.last()
+        }
+    }
 }
 
 impl<I> TryIterator for Fuse<I>
@@ -75,6 +91,14 @@ where
         R::Error: From<Self::Error>,
     {
         self.iter.try_fold(acc, f)
+    }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        self.iter.count()
+    }
+
+    fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        self.iter.last()
     }
 }
 

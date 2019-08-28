@@ -42,6 +42,14 @@ where
             .map_break(|x: !| x)
             .into_try()
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        self.iter.count().map_err(self.f)
+    }
+
+    fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        self.iter.last().map_err(self.f)
+    }
 }
 
 impl<I, F, E> DoubleEndedTryIterator for MapErrMut<'_, I, F>

@@ -79,6 +79,22 @@ where
         };
         self.iter.try_fold(acc, f)
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        match self.peeked {
+            None => self.iter.count(),
+            Some(None) => Ok(0),
+            Some(Some(_)) => Ok(self.iter.count()? + 1),
+        }
+    }
+
+    fn last(mut self) -> Result<Option<Self::Item>, Self::Error> {
+        match self.peeked.take() {
+            None => self.iter.last(),
+            Some(None) => Ok(None),
+            Some(Some(x)) => Ok(Some(self.iter.last()?.unwrap_or(x))),
+        }
+    }
 }
 
 impl<I> DoubleEndedTryIterator for Peekable<I>

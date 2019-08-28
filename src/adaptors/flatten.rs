@@ -139,6 +139,14 @@ where
             iter.map_err_mut(From::from).try_fold(acc, &mut f)
         })
     }
+
+    fn count(mut self) -> Result<usize, Self::Error> {
+        self.iter_try_fold(0, |acc, iter| Ok(acc + iter.count()?))
+    }
+
+    fn last(mut self) -> Result<Option<Self::Item>, Self::Error> {
+        self.iter_try_fold(None, |last, iter| Ok(iter.last()?.or(last)))
+    }
 }
 
 impl<I, U> DoubleEndedTryIterator for Flatten<I, U>

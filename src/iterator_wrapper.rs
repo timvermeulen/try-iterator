@@ -62,6 +62,14 @@ where
     {
         self.iter.try_fold(acc, f)
     }
+
+    fn count(self) -> Result<usize, Self::Error> {
+        Ok(self.iter.count())
+    }
+
+    fn last(self) -> Result<Option<Self::Item>, Self::Error> {
+        Ok(self.iter.last())
+    }
 }
 
 impl<I, E> DoubleEndedTryIterator for IteratorWrapper<I, E>
