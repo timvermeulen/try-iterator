@@ -168,4 +168,8 @@ where
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         (**self).next_back()
     }
+
+    fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        (**self).try_nth_back(n)
+    }
 }

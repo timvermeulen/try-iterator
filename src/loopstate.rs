@@ -38,8 +38,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     pub fn try_map_continue<F, R, T>(self, f: F) -> LoopState<T, B, I, M>
     where
         F: FnOnce(C) -> R,
-        R: Try<Ok = T>,
-        LoopBreak<B, I, M>: From<R::Error>,
+        R: Try<Ok = T, Error = LoopBreak<B, I, M>>,
     {
         LoopState::Continue(f(self?)?)
     }
@@ -118,4 +117,57 @@ impl<T, I, M> From<I> for LoopBreak<T, I, M> {
     fn from(e: I) -> Self {
         Self::IterError(e)
     }
+}
+
+impl<T, I, M> From<MapError<I, M>> for LoopBreak<T, I, M> {
+    fn from(MapError { e, .. }: MapError<I, M>) -> Self {
+        Self::MapError(e)
+    }
+}
+
+pub struct MapResult<T, I, M> {
+    inner: Result<T, M>,
+    _marker: PhantomData<I>,
+}
+
+impl<T, I, M> MapResult<T, I, M> {
+    fn new(inner: Result<T, M>) -> Self {
+        Self {
+            inner,
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn wrap<R>(r: R) -> Self
+    where
+        R: Try<Ok = T>,
+        M: From<R::Error>,
+    {
+        Self::new(r.into_result().map_err(From::from))
+    }
+}
+
+impl<T, I, M> Try for MapResult<T, I, M> {
+    type Ok = T;
+    type Error = MapError<I, M>;
+
+    fn into_result(self) -> Result<Self::Ok, Self::Error> {
+        self.inner.map_err(|e| MapError {
+            e,
+            _marker: PhantomData,
+        })
+    }
+
+    fn from_error(MapError { e, .. }: Self::Error) -> Self {
+        Self::new(Err(e))
+    }
+
+    fn from_ok(x: Self::Ok) -> Self {
+        Self::new(Ok(x))
+    }
+}
+
+pub struct MapError<I, M> {
+    e: M,
+    _marker: PhantomData<I>,
 }

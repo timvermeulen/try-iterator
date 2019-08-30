@@ -98,10 +98,9 @@ pub trait TryIterator {
         R: Try<Ok = Option<T>>,
         R::Error: From<Self::Error>,
     {
-        self.try_for_each(|x| match f(x).into_result() {
-            Ok(None) => LoopState::Continue(()),
-            Ok(Some(x)) => LoopState::Break(Some(x)),
-            Err(e) => LoopState::MapError(e),
+        self.try_for_each(|x| match MapResult::wrap(f(x))? {
+            None => LoopState::Continue(()),
+            x @ Some(_) => LoopState::Break(x),
         })
         .map_continue(|()| None)
         .into_try()
@@ -317,19 +316,18 @@ pub trait TryIterator {
         R::Error: From<Self::Error> + From<I::Error>,
     {
         let mut other = other.into_try_iter();
-        self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::Break(Some(Ordering::Greater)),
-            Ok(Some(y)) => match f(x, y).into_result() {
-                Ok(Some(Ordering::Equal)) => LoopState::Continue(()),
-                Ok(non_eq) => LoopState::Break(non_eq),
-                Err(e) => LoopState::MapError(e),
+        self.try_for_each(|x| match MapResult::wrap(other.next())? {
+            None => LoopState::Break(Some(Ordering::Greater)),
+            Some(y) => match MapResult::wrap(f(x, y))? {
+                Some(Ordering::Equal) => LoopState::Continue(()),
+                non_eq => LoopState::Break(non_eq),
             },
-            Err(e) => LoopState::MapError(e.into()),
         })
-        .try_map_continue(|()| match other.next().into_result() {
-            Ok(None) => Ok(Some(Ordering::Equal)),
-            Ok(Some(_)) => Ok(Some(Ordering::Less)),
-            Err(e) => Err(LoopBreak::MapError(e.into())),
+        .try_map_continue(|()| {
+            Ok(Some(match MapResult::wrap(other.next())? {
+                None => Ordering::Equal,
+                Some(_) => Ordering::Less,
+            }))
         })
         .into_try()
     }
@@ -353,19 +351,18 @@ pub trait TryIterator {
         R::Error: From<Self::Error> + From<I::Error>,
     {
         let mut other = other.into_try_iter();
-        self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::Break(Ordering::Greater),
-            Ok(Some(y)) => match f(x, y).into_result() {
-                Ok(Ordering::Equal) => LoopState::Continue(()),
-                Ok(non_eq) => LoopState::Break(non_eq),
-                Err(e) => LoopState::MapError(e),
+        self.try_for_each(|x| match MapResult::wrap(other.next())? {
+            None => LoopState::Break(Ordering::Greater),
+            Some(y) => match MapResult::wrap(f(x, y))? {
+                Ordering::Equal => LoopState::Continue(()),
+                non_eq => LoopState::Break(non_eq),
             },
-            Err(e) => LoopState::MapError(e.into()),
         })
-        .try_map_continue(|()| match other.next().into_result() {
-            Ok(None) => Ok(Ordering::Equal),
-            Ok(Some(_)) => Ok(Ordering::Less),
-            Err(e) => Err(LoopBreak::MapError(e.into())),
+        .try_map_continue(|()| {
+            Ok(match MapResult::wrap(other.next())? {
+                None => Ordering::Equal,
+                Some(_) => Ordering::Less,
+            })
         })
         .into_try()
     }
@@ -389,19 +386,14 @@ pub trait TryIterator {
         R::Error: From<Self::Error> + From<I::Error>,
     {
         let mut other = other.into_try_iter();
-        self.try_for_each(|x| match other.next().into_result() {
-            Ok(None) => LoopState::Break(false),
-            Ok(Some(y)) => match f(x, y).into_result() {
-                Ok(true) => LoopState::Continue(()),
-                Ok(false) => LoopState::Break(false),
-                Err(e) => LoopState::MapError(e),
+        self.try_for_each(|x| match MapResult::wrap(other.next())? {
+            None => LoopState::Break(false),
+            Some(y) => match MapResult::wrap(f(x, y))? {
+                true => LoopState::Continue(()),
+                false => LoopState::Break(false),
             },
-            Err(e) => LoopState::MapError(e.into()),
         })
-        .try_map_continue(|()| match other.next().into_result() {
-            Ok(x) => Ok(x.is_none()),
-            Err(e) => Err(LoopBreak::MapError(e.into())),
-        })
+        .try_map_continue(|()| Ok(MapResult::wrap(other.next())?.is_none()))
         .into_try()
     }
 
@@ -930,5 +922,13 @@ where
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         (**self).next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (**self).size_hint()
+    }
+
+    fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
+        (**self).try_nth(n)
     }
 }

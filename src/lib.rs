@@ -23,7 +23,7 @@ pub use traits::*;
 
 use fn_wrapper::FnWrapper;
 use iterator_wrapper::IteratorWrapper;
-use loopstate::{LoopBreak, LoopState};
+use loopstate::{LoopState, MapResult};
 use size_hint::SizeHintExt;
 
 use core::cmp::{self, Ordering};
