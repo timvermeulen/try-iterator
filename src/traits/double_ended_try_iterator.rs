@@ -38,22 +38,22 @@ pub trait DoubleEndedTryIterator: TryIterator {
         Try::from_ok(acc)
     }
 
-    fn rfor_each<F>(self, mut f: F) -> Result<(), Self::Error>
+    fn rfor_each<F>(self, f: F) -> Result<(), Self::Error>
     where
         Self: Sized,
         F: FnMut(Self::Item),
     {
-        self.rfold((), |(), x| f(x))
+        self.rev().for_each(f)
     }
 
-    fn try_rfor_each<F, R>(&mut self, mut f: F) -> R
+    fn try_rfor_each<F, R>(&mut self, f: F) -> R
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
         R: Try<Ok = ()>,
         R::Error: From<Self::Error>,
     {
-        self.try_rfold((), |(), x| f(x))
+        self.rev_mut().try_for_each(f)
     }
 
     fn rfind_map<F, T>(&mut self, f: F) -> Result<Option<T>, Self::Error>
@@ -64,20 +64,14 @@ pub trait DoubleEndedTryIterator: TryIterator {
         self.try_rfind_map(FnWrapper::new(f))
     }
 
-    fn try_rfind_map<F, R, T>(&mut self, mut f: F) -> R
+    fn try_rfind_map<F, R, T>(&mut self, f: F) -> R
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
         R: Try<Ok = Option<T>>,
         R::Error: From<Self::Error>,
     {
-        self.try_rfor_each(|x| match f(x).into_result() {
-            Ok(None) => LoopState::Continue(()),
-            Ok(Some(x)) => LoopState::Break(Some(x)),
-            Err(e) => LoopState::MapError(e),
-        })
-        .map_continue(|()| None)
-        .into_try()
+        self.rev_mut().try_find_map(f)
     }
 
     fn rfind<F>(&mut self, f: F) -> Result<Option<Self::Item>, Self::Error>
@@ -88,40 +82,34 @@ pub trait DoubleEndedTryIterator: TryIterator {
         self.try_rfind(FnWrapper::new(f))
     }
 
-    fn try_rfind<F, R>(&mut self, mut f: F) -> Result<Option<Self::Item>, R::Error>
+    fn try_rfind<F, R>(&mut self, f: F) -> Result<Option<Self::Item>, R::Error>
     where
         Self: Sized,
         F: FnMut(&Self::Item) -> R,
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        self.try_rfind_map(|x| Ok(if f(&x)? { Some(x) } else { None }))
+        self.rev_mut().try_rfind(f)
     }
 
     fn rposition<F>(&mut self, f: F) -> Result<Option<usize>, Self::Error>
     where
-        Self: Sized,
+        Self: Sized + ExactSizeTryIterator,
         F: FnMut(Self::Item) -> bool,
     {
         self.try_rposition(FnWrapper::new(f))
     }
 
-    fn try_rposition<F, R>(&mut self, mut f: F) -> Result<Option<usize>, R::Error>
+    fn try_rposition<F, R>(&mut self, f: F) -> Result<Option<usize>, R::Error>
     where
-        Self: Sized,
+        Self: Sized + ExactSizeTryIterator,
         F: FnMut(Self::Item) -> R,
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        let mut n = 0;
-        self.try_rfind_map(|x| {
-            Ok(if f(x)? {
-                Some(n)
-            } else {
-                n += 1;
-                None
-            })
-        })
+        self.rev_mut()
+            .try_position(f)
+            .map(|x| x.map(|_| self.len()))
     }
 
     fn partition_in_place<'a, T: 'a, F>(self, f: F) -> Result<usize, Self::Error>
@@ -163,6 +151,13 @@ pub trait DoubleEndedTryIterator: TryIterator {
         Self: Sized,
     {
         Rev::new(self)
+    }
+
+    fn rev_mut<'a>(&'a mut self) -> RevMut<'a, Self>
+    where
+        Self: Sized,
+    {
+        RevMut::new(self)
     }
 }
 
