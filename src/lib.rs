@@ -52,3 +52,25 @@ impl<T> OptionExt<T> for Option<T> {
         }
     }
 }
+
+fn try_min_by<T, F, R>(x: T, y: T, f: F) -> Result<T, R::Error>
+where
+    F: FnOnce(&T, &T) -> R,
+    R: Try<Ok = Ordering>,
+{
+    Ok(match f(&x, &y)? {
+        Ordering::Less | Ordering::Equal => x,
+        Ordering::Greater => y,
+    })
+}
+
+fn try_max_by<T, F, R>(x: T, y: T, f: F) -> Result<T, R::Error>
+where
+    F: FnOnce(&T, &T) -> R,
+    R: Try<Ok = Ordering>,
+{
+    Ok(match f(&x, &y)? {
+        Ordering::Less | Ordering::Equal => y,
+        Ordering::Greater => x,
+    })
+}

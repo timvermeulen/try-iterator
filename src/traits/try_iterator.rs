@@ -47,6 +47,24 @@ pub trait TryIterator {
         Try::from_ok(acc)
     }
 
+    fn fold1<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item, Self::Item) -> Self::Item,
+    {
+        self.try_fold1(FnWrapper::new(f))
+    }
+
+    fn try_fold1<F, R>(mut self, f: F) -> Result<Option<Self::Item>, R::Error>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item, Self::Item) -> R,
+        R: Try<Ok = Self::Item>,
+        R::Error: From<Self::Error>,
+    {
+        self.next()?.try_map(|first| self.try_fold(first, f))
+    }
+
     fn for_each<F>(self, mut f: F) -> Result<(), Self::Error>
     where
         Self: Sized,
@@ -207,7 +225,7 @@ pub trait TryIterator {
         R: Try<Ok = Ordering>,
         R::Error: From<Self::Error>,
     {
-        try_select_fold1(self, |x, y| Ok(f(x, y)? == Ordering::Greater))
+        self.try_fold1(|x, y| try_min_by(x, y, &mut f))
     }
 
     fn min_by_key<F, T>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
@@ -227,10 +245,9 @@ pub trait TryIterator {
         R::Error: From<Self::Error>,
         T: Ord,
     {
-        select_fold1(self.try_map(|x| Ok((f(&x)?, x))), |(x_p, _), (y_p, _)| {
-            x_p > y_p
-        })
-        .map(|x| x.map(|(_, x)| x))
+        self.try_map(|x| Ok((f(&x)?, x)))
+            .min_by(|(x, _), (y, _)| x.cmp(y))
+            .map(|x| x.map(|(_, x)| x))
     }
 
     fn max(self) -> Result<Option<Self::Item>, Self::Error>
@@ -256,7 +273,7 @@ pub trait TryIterator {
         R: Try<Ok = Ordering>,
         R::Error: From<Self::Error>,
     {
-        try_select_fold1(self, |x, y| Ok(f(x, y)? != Ordering::Greater))
+        self.try_fold1(|x, y| try_max_by(x, y, &mut f))
     }
 
     fn max_by_key<F, T>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
@@ -276,10 +293,9 @@ pub trait TryIterator {
         R::Error: From<Self::Error>,
         T: Ord,
     {
-        select_fold1(self.try_map(|x| Ok((f(&x)?, x))), |(x_p, _), (y_p, _)| {
-            x_p <= y_p
-        })
-        .map(|x| x.map(|(_, x)| x))
+        self.try_map(|x| Ok((f(&x)?, x)))
+            .max_by(|(x, _), (y, _)| x.cmp(y))
+            .map(|x| x.map(|(_, x)| x))
     }
 
     fn partial_cmp_by<I, F>(self, other: I, f: F) -> Result<Option<Ordering>, Self::Error>
@@ -491,25 +507,21 @@ pub trait TryIterator {
         self.try_is_sorted_by(FnWrapper::new(f))
     }
 
-    fn try_is_sorted_by<F, R>(mut self, mut f: F) -> R
+    fn try_is_sorted_by<F, R>(self, mut f: F) -> R
     where
         Self: Sized,
         F: FnMut(&Self::Item, &Self::Item) -> R,
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        let first = match self.next()? {
-            Some(x) => x,
-            None => return Try::from_ok(true),
+        let x: LoopState<_, _, R::Error, _> = try {
+            self.map_err(R::Error::from)
+                .try_fold1(|x, y| match f(&x, &y)? {
+                    true => LoopState::Continue(y),
+                    false => LoopState::Break(false),
+                })?
         };
-
-        self.map_err(R::Error::from)
-            .try_fold(first, |x, y| match f(&x, &y)? {
-                true => LoopState::Continue(y),
-                false => LoopState::Break(false),
-            })
-            .map_continue(|_| true)
-            .into_try()
+        x.map_continue(|_| true).into_try()
     }
 
     fn is_sorted_by_key<F, K>(self, f: F) -> Result<bool, Self::Error>
@@ -907,29 +919,6 @@ pub trait TryIterator {
     {
         IntoResults::new(self)
     }
-}
-
-fn select_fold1<I, F>(iter: I, f: F) -> Result<Option<I::Item>, I::Error>
-where
-    I: TryIterator,
-    F: FnMut(&I::Item, &I::Item) -> bool,
-{
-    try_select_fold1(iter, FnWrapper::new(f))
-}
-
-fn try_select_fold1<I, F, R>(mut iter: I, mut f: F) -> Result<Option<I::Item>, R::Error>
-where
-    I: TryIterator,
-    F: FnMut(&I::Item, &I::Item) -> R,
-    R: Try<Ok = bool>,
-    R::Error: From<I::Error>,
-{
-    let first = match iter.next()? {
-        None => return Ok(None),
-        Some(first) => first,
-    };
-    iter.try_fold(first, |sel, x| Ok(if f(&sel, &x)? { x } else { sel }))
-        .map(Some)
 }
 
 impl<I> TryIterator for &mut I
