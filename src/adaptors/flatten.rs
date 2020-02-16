@@ -10,11 +10,7 @@ pub struct Flatten<I, U> {
 
 impl<I, U> Flatten<I, U> {
     pub(crate) fn new(iter: I) -> Self {
-        Self {
-            iter,
-            front: None,
-            back: None,
-        }
+        Self { iter, front: None, back: None }
     }
 }
 
@@ -118,11 +114,9 @@ where
     }
 
     fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        self.iter_try_fold(n, |n, iter| {
-            match iter.map_err_mut(I::Error::from).try_nth(n)? {
-                Ok(x) => LoopState::Break(x),
-                Err(n) => LoopState::Continue(n),
-            }
+        self.iter_try_fold(n, |n, iter| match iter.map_err_mut(I::Error::from).try_nth(n)? {
+            Ok(x) => LoopState::Break(x),
+            Err(n) => LoopState::Continue(n),
         })
         .map_continue(Err)
         .map_break(Ok)
@@ -135,9 +129,7 @@ where
         R: Try<Ok = Acc>,
         R::Error: From<Self::Error>,
     {
-        self.iter_try_fold(acc, move |acc, iter| {
-            iter.map_err_mut(From::from).try_fold(acc, &mut f)
-        })
+        self.iter_try_fold(acc, move |acc, iter| iter.map_err_mut(From::from).try_fold(acc, &mut f))
     }
 
     fn count(mut self) -> Result<usize, Self::Error> {

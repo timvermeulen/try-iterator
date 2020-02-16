@@ -10,11 +10,7 @@ pub struct TakeWhile<I, F> {
 
 impl<I, F> TakeWhile<I, F> {
     pub(crate) fn new(iter: I, f: F) -> Self {
-        Self {
-            iter,
-            f,
-            flag: false,
-        }
+        Self { iter, f, flag: false }
     }
 }
 
@@ -33,11 +29,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        if self.flag {
-            size_hint::ZERO
-        } else {
-            self.iter.size_hint().without_lower_bound()
-        }
+        if self.flag { size_hint::ZERO } else { self.iter.size_hint().without_lower_bound() }
     }
 
     fn try_fold<Acc, G, Q>(&mut self, acc: Acc, mut g: G) -> Q

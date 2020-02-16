@@ -13,8 +13,7 @@ impl<I> Rev<I> {
 }
 
 impl<I> TryIterator for Rev<I>
-where
-    I: DoubleEndedTryIterator,
+where I: DoubleEndedTryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -43,8 +42,7 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Rev<I>
-where
-    I: DoubleEndedTryIterator,
+where I: DoubleEndedTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.iter.next()

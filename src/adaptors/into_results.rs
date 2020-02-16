@@ -13,8 +13,7 @@ impl<I> IntoResults<I> {
 }
 
 impl<I> Iterator for IntoResults<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = Result<I::Item, I::Error>;
 

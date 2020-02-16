@@ -39,11 +39,9 @@ where
     {
         let b = &mut self.b;
         self.a
-            .try_fold(acc, |acc, x| {
-                match b.map_err_mut(A::Error::from).next()? {
-                    None => LoopState::Break(acc),
-                    Some(y) => LoopState::continue_with_try(f(acc, (x, y))),
-                }
+            .try_fold(acc, |acc, x| match b.map_err_mut(A::Error::from).next()? {
+                None => LoopState::Break(acc),
+                Some(y) => LoopState::continue_with_try(f(acc, (x, y))),
             })
             .into_try()
     }

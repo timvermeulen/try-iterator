@@ -13,8 +13,7 @@ pub trait ExactSizeTryIterator: TryIterator {
 }
 
 impl<I> ExactSizeTryIterator for &mut I
-where
-    I: ExactSizeTryIterator + ?Sized,
+where I: ExactSizeTryIterator + ?Sized
 {
     fn len(&self) -> usize {
         (**self).len()

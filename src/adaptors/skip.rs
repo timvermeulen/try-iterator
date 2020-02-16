@@ -14,8 +14,7 @@ impl<I> Skip<I> {
 }
 
 impl<I> TryIterator for Skip<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -56,8 +55,7 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Skip<I>
-where
-    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+where I: DoubleEndedTryIterator + ExactSizeTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)

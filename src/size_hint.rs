@@ -21,10 +21,7 @@ pub trait SizeHintAdd {
 
 impl SizeHintAdd for SizeHint {
     fn add((x_lower, x_upper): SizeHint, (y_lower, y_upper): SizeHint) -> SizeHint {
-        (
-            x_lower.saturating_add(y_lower),
-            try { x_upper?.checked_add(y_upper?)? },
-        )
+        (x_lower.saturating_add(y_lower), try { x_upper?.checked_add(y_upper?)? })
     }
 }
 
@@ -35,9 +32,7 @@ impl SizeHintAdd for usize {
 }
 
 pub fn add<T>(size_hint: SizeHint, x: T) -> SizeHint
-where
-    T: SizeHintAdd,
-{
+where T: SizeHintAdd {
     T::add(size_hint, x)
 }
 
@@ -47,10 +42,7 @@ pub trait SizeHintSub {
 
 impl SizeHintSub for SizeHint {
     fn sub((x_lower, x_upper): SizeHint, (y_lower, y_upper): SizeHint) -> SizeHint {
-        (
-            x_lower.saturating_sub(y_lower),
-            try { x_upper?.saturating_sub(y_upper?) },
-        )
+        (x_lower.saturating_sub(y_lower), try { x_upper?.saturating_sub(y_upper?) })
     }
 }
 
@@ -61,9 +53,7 @@ impl SizeHintSub for usize {
 }
 
 pub fn sub<T>(size_hint: SizeHint, x: T) -> SizeHint
-where
-    T: SizeHintSub,
-{
+where T: SizeHintSub {
     T::sub(size_hint, x)
 }
 
@@ -96,8 +86,6 @@ impl SizeHintMin for usize {
 }
 
 pub fn min<T>(size_hint: SizeHint, x: T) -> SizeHint
-where
-    T: SizeHintMin,
-{
+where T: SizeHintMin {
     T::min(size_hint, x)
 }

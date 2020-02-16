@@ -14,8 +14,7 @@ impl<I> Fuse<I> {
 }
 
 impl<I> TryIterator for Fuse<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -25,19 +24,11 @@ where
     }
 
     default fn size_hint(&self) -> (usize, Option<usize>) {
-        if self.done {
-            size_hint::ZERO
-        } else {
-            self.iter.size_hint()
-        }
+        if self.done { size_hint::ZERO } else { self.iter.size_hint() }
     }
 
     default fn try_nth(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        if self.done {
-            Ok(Err(n))
-        } else {
-            self.iter.try_nth(n)
-        }
+        if self.done { Ok(Err(n)) } else { self.iter.try_nth(n) }
     }
 
     default fn try_fold<Acc, F, R>(&mut self, acc: Acc, f: F) -> R
@@ -56,25 +47,16 @@ where
     }
 
     default fn count(self) -> Result<usize, Self::Error> {
-        if self.done {
-            Ok(0)
-        } else {
-            self.iter.count()
-        }
+        if self.done { Ok(0) } else { self.iter.count() }
     }
 
     default fn last(self) -> Result<Option<Self::Item>, Self::Error> {
-        if self.done {
-            Ok(None)
-        } else {
-            self.iter.last()
-        }
+        if self.done { Ok(None) } else { self.iter.last() }
     }
 }
 
 impl<I> TryIterator for Fuse<I>
-where
-    I: FusedTryIterator,
+where I: FusedTryIterator
 {
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
@@ -103,19 +85,14 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Fuse<I>
-where
-    I: DoubleEndedTryIterator,
+where I: DoubleEndedTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)
     }
 
     default fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        if self.done {
-            Ok(Err(n))
-        } else {
-            self.iter.try_nth_back(n)
-        }
+        if self.done { Ok(Err(n)) } else { self.iter.try_nth_back(n) }
     }
 
     default fn try_rfold<Acc, F, R>(&mut self, acc: Acc, f: F) -> R
@@ -135,8 +112,7 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Fuse<I>
-where
-    I: DoubleEndedTryIterator + FusedTryIterator,
+where I: DoubleEndedTryIterator + FusedTryIterator
 {
     fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
         self.iter.try_nth_back(n)

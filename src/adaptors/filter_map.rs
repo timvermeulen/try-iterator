@@ -38,12 +38,10 @@ where
         Q::Error: From<Self::Error>,
     {
         let f = &mut self.f;
-        self.iter
-            .map_err_mut(From::from)
-            .try_fold(acc, |acc, x| match f(x)? {
-                None => Try::from_ok(acc),
-                Some(x) => g(acc, x),
-            })
+        self.iter.map_err_mut(From::from).try_fold(acc, |acc, x| match f(x)? {
+            None => Try::from_ok(acc),
+            Some(x) => g(acc, x),
+        })
     }
 }
 
@@ -65,12 +63,10 @@ where
         Q::Error: From<Self::Error>,
     {
         let f = &mut self.f;
-        self.iter
-            .map_err_mut(From::from)
-            .try_rfold(acc, |acc, x| match f(x)? {
-                None => Try::from_ok(acc),
-                Some(x) => g(acc, x),
-            })
+        self.iter.map_err_mut(From::from).try_rfold(acc, |acc, x| match f(x)? {
+            None => Try::from_ok(acc),
+            Some(x) => g(acc, x),
+        })
     }
 }
 

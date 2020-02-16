@@ -3,16 +3,14 @@ use super::*;
 #[derive(Clone, Debug)]
 #[must_use = "iterators are lazy and do nothing unless consumed"]
 pub struct Peekable<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     iter: I,
     peeked: Option<Option<I::Item>>,
 }
 
 impl<I> Peekable<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter, peeked: None }
@@ -33,8 +31,7 @@ where
 }
 
 impl<I> TryIterator for Peekable<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -98,8 +95,7 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Peekable<I>
-where
-    I: DoubleEndedTryIterator,
+where I: DoubleEndedTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)

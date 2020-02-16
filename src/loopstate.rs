@@ -9,9 +9,7 @@ pub enum LoopState<C, B, I, M> {
 
 impl<C, B, I, M> LoopState<C, B, I, M> {
     pub fn continue_with_try<R>(r: R) -> Self
-    where
-        R: Try<Ok = C, Error = M>,
-    {
+    where R: Try<Ok = C, Error = M> {
         match r.into_result() {
             Ok(x) => Self::Continue(x),
             Err(e) => Self::MapError(e),
@@ -19,9 +17,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     }
 
     pub fn break_with_try<R>(r: R) -> Self
-    where
-        R: Try<Ok = B, Error = M>,
-    {
+    where R: Try<Ok = B, Error = M> {
         match r.into_result() {
             Ok(x) => Self::Break(x),
             Err(e) => Self::MapError(e),
@@ -29,9 +25,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     }
 
     pub fn map_continue<F, T>(self, f: F) -> LoopState<T, B, I, M>
-    where
-        F: FnOnce(C) -> T,
-    {
+    where F: FnOnce(C) -> T {
         self.try_map_continue(|x| Ok::<_, LoopBreak<B, I, M>>(f(x)))
     }
 
@@ -44,9 +38,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     }
 
     pub fn map_break<F, T>(self, f: F) -> LoopState<C, T, I, M>
-    where
-        F: FnOnce(B) -> T,
-    {
+    where F: FnOnce(B) -> T {
         match self {
             Self::Continue(x) => LoopState::Continue(x),
             Self::Break(x) => LoopState::Break(f(x)),
@@ -56,9 +48,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
     }
 
     pub fn map_iter_error<F, E>(self, f: F) -> LoopState<C, B, E, M>
-    where
-        F: FnOnce(I) -> E,
-    {
+    where F: FnOnce(I) -> E {
         match self {
             Self::Continue(x) => LoopState::Continue(x),
             Self::Break(x) => LoopState::Break(x),
@@ -69,8 +59,7 @@ impl<C, B, I, M> LoopState<C, B, I, M> {
 }
 
 impl<T, I, M> LoopState<T, T, I, M>
-where
-    M: From<I>,
+where M: From<I>
 {
     pub fn into_try<R: Try<Ok = T, Error = M>>(self) -> R {
         match self {
@@ -132,10 +121,7 @@ pub struct MapResult<T, I, M> {
 
 impl<T, I, M> MapResult<T, I, M> {
     fn new(inner: Result<T, M>) -> Self {
-        Self {
-            inner,
-            _marker: PhantomData,
-        }
+        Self { inner, _marker: PhantomData }
     }
 
     pub fn wrap<R>(r: R) -> Self
@@ -152,10 +138,7 @@ impl<T, I, M> Try for MapResult<T, I, M> {
     type Error = MapError<I, M>;
 
     fn into_result(self) -> Result<Self::Ok, Self::Error> {
-        self.inner.map_err(|e| MapError {
-            e,
-            _marker: PhantomData,
-        })
+        self.inner.map_err(|e| MapError { e, _marker: PhantomData })
     }
 
     fn from_error(MapError { e, .. }: Self::Error) -> Self {

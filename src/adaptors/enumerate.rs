@@ -14,8 +14,7 @@ impl<I> Enumerate<I> {
 }
 
 impl<I> TryIterator for Enumerate<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = (usize, I::Item);
     type Error = I::Error;
@@ -56,18 +55,14 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for Enumerate<I>
-where
-    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+where I: DoubleEndedTryIterator + ExactSizeTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)
     }
 
     fn try_nth_back(&mut self, n: usize) -> Result<Result<Self::Item, usize>, Self::Error> {
-        Ok(self
-            .iter
-            .try_nth_back(n)?
-            .map(|x| (self.count + self.len(), x)))
+        Ok(self.iter.try_nth_back(n)?.map(|x| (self.count + self.len(), x)))
     }
 
     fn try_rfold<Acc, F, R>(&mut self, acc: Acc, mut f: F) -> R

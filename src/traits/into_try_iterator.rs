@@ -9,8 +9,7 @@ pub trait IntoTryIterator {
 }
 
 impl<I> IntoTryIterator for I
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = <Self as TryIterator>::Item;
     type Error = <Self as TryIterator>::Error;

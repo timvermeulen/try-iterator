@@ -7,16 +7,12 @@ pub struct IteratorWrapper<I, E> {
 
 impl<I, E> IteratorWrapper<I, E> {
     pub(crate) fn new(iter: I) -> Self {
-        Self {
-            iter,
-            _marker: PhantomData,
-        }
+        Self { iter, _marker: PhantomData }
     }
 }
 
 impl<I, E> Clone for IteratorWrapper<I, E>
-where
-    I: Clone,
+where I: Clone
 {
     fn clone(&self) -> Self {
         Self::new(self.iter.clone())
@@ -24,19 +20,15 @@ where
 }
 
 impl<I, E> Debug for IteratorWrapper<I, E>
-where
-    I: Debug,
+where I: Debug
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("IteratorWrapper")
-            .field("iter", &self.iter)
-            .finish()
+        f.debug_struct("IteratorWrapper").field("iter", &self.iter).finish()
     }
 }
 
 impl<I, E> TryIterator for IteratorWrapper<I, E>
-where
-    I: Iterator,
+where I: Iterator
 {
     type Item = I::Item;
     type Error = E;
@@ -73,8 +65,7 @@ where
 }
 
 impl<I, E> DoubleEndedTryIterator for IteratorWrapper<I, E>
-where
-    I: DoubleEndedIterator,
+where I: DoubleEndedIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         Ok(self.iter.next_back())

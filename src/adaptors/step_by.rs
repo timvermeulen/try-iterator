@@ -11,17 +11,12 @@ pub struct StepBy<I> {
 impl<I> StepBy<I> {
     pub(crate) fn new(iter: I, n: usize) -> Self {
         assert!(n != 0);
-        Self {
-            iter,
-            n: n - 1,
-            first_take: true,
-        }
+        Self { iter, n: n - 1, first_take: true }
     }
 }
 
 impl<I> StepBy<I>
-where
-    I: ExactSizeTryIterator,
+where I: ExactSizeTryIterator
 {
     fn next_back_index(&self) -> usize {
         let len = self.iter.len();
@@ -35,8 +30,7 @@ where
 }
 
 impl<I> TryIterator for StepBy<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -51,11 +45,7 @@ where
 
         if self.first_take {
             let f = |n| {
-                if n == 0 {
-                    0
-                } else {
-                    1 + f(n - 1)
-                }
+                if n == 0 { 0 } else { 1 + f(n - 1) }
             };
             (f(lower), upper.map(f))
         } else {
@@ -84,8 +74,7 @@ where
 }
 
 impl<I> DoubleEndedTryIterator for StepBy<I>
-where
-    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+where I: DoubleEndedTryIterator + ExactSizeTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)

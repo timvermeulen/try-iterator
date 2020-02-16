@@ -10,11 +10,7 @@ pub struct SkipWhile<I, F> {
 
 impl<I, F> SkipWhile<I, F> {
     pub(crate) fn new(iter: I, f: F) -> Self {
-        Self {
-            iter,
-            f,
-            flag: false,
-        }
+        Self { iter, f, flag: false }
     }
 }
 

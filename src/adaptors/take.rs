@@ -14,8 +14,7 @@ impl<I> Take<I> {
 }
 
 impl<I> TryIterator for Take<I>
-where
-    I: TryIterator,
+where I: TryIterator
 {
     type Item = I::Item;
     type Error = I::Error;
@@ -60,19 +59,14 @@ where
             .try_fold(acc, move |acc, x| {
                 *n -= 1;
                 let r = f(acc, x);
-                if *n == 0 {
-                    LoopState::break_with_try(r)
-                } else {
-                    LoopState::continue_with_try(r)
-                }
+                if *n == 0 { LoopState::break_with_try(r) } else { LoopState::continue_with_try(r) }
             })
             .into_try()
     }
 }
 
 impl<I> DoubleEndedTryIterator for Take<I>
-where
-    I: DoubleEndedTryIterator + ExactSizeTryIterator,
+where I: DoubleEndedTryIterator + ExactSizeTryIterator
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         self.rfind(|_| true)

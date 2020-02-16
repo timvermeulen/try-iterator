@@ -1,12 +1,5 @@
 #![no_std]
-#![feature(
-    try_trait,
-    fn_traits,
-    never_type,
-    unboxed_closures,
-    try_blocks,
-    specialization
-)]
+#![feature(try_trait, fn_traits, never_type, unboxed_closures, try_blocks, specialization)]
 
 mod adaptors;
 mod fn_wrapper;
@@ -25,12 +18,14 @@ use iterator_wrapper::IteratorWrapper;
 use loopstate::{LoopState, MapResult};
 use size_hint::SizeHintExt;
 
-use core::cmp::{self, Ordering};
-use core::fmt::{self, Debug, Formatter};
-use core::iter::FusedIterator;
-use core::marker::PhantomData;
-use core::mem;
-use core::ops::Try;
+use core::{
+    cmp::{self, Ordering},
+    fmt::{self, Debug, Formatter},
+    iter::FusedIterator,
+    marker::PhantomData,
+    mem,
+    ops::Try,
+};
 
 trait OptionExt<T> {
     fn try_map<F, R>(self, f: F) -> Result<Option<R::Ok>, R::Error>

@@ -107,9 +107,7 @@ pub trait DoubleEndedTryIterator: TryIterator {
         R: Try<Ok = bool>,
         R::Error: From<Self::Error>,
     {
-        self.rev_mut()
-            .try_position(f)
-            .map(|x| x.map(|_| self.len()))
+        self.rev_mut().try_position(f).map(|x| x.map(|_| self.len()))
     }
 
     fn partition_in_place<'a, T: 'a, F>(self, f: F) -> Result<usize, Self::Error>
@@ -147,23 +145,18 @@ pub trait DoubleEndedTryIterator: TryIterator {
     }
 
     fn rev(self) -> Rev<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Rev::new(self)
     }
 
     fn rev_mut<'a>(&'a mut self) -> RevMut<'a, Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         RevMut::new(self)
     }
 }
 
 impl<I> DoubleEndedTryIterator for &mut I
-where
-    I: DoubleEndedTryIterator + ?Sized,
+where I: DoubleEndedTryIterator + ?Sized
 {
     fn next_back(&mut self) -> Result<Option<Self::Item>, Self::Error> {
         (**self).next_back()

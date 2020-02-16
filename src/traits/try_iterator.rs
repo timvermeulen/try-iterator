@@ -188,16 +188,12 @@ pub trait TryIterator {
     }
 
     fn count(self) -> Result<usize, Self::Error>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         self.fold(0, |n, _| n + 1)
     }
 
     fn last(self) -> Result<Option<Self::Item>, Self::Error>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         self.fold(None, |_, x| Some(x))
     }
 
@@ -507,11 +503,10 @@ pub trait TryIterator {
         R::Error: From<Self::Error>,
     {
         let x: LoopState<_, _, R::Error, _> = try {
-            self.map_err(R::Error::from)
-                .try_fold1(|x, y| match f(&x, &y)? {
-                    true => LoopState::Continue(y),
-                    false => LoopState::Break(false),
-                })?
+            self.map_err(R::Error::from).try_fold1(|x, y| match f(&x, &y)? {
+                true => LoopState::Continue(y),
+                false => LoopState::Break(false),
+            })?
         };
         x.map_continue(|_| true).into_try()
     }
@@ -611,20 +606,15 @@ pub trait TryIterator {
         FromA: Default + Extend<A>,
         FromB: Default + Extend<B>,
     {
-        self.fold(
-            (Default::default(), Default::default()),
-            |(mut xs, mut ys), (x, y)| {
-                xs.extend(Some(x));
-                ys.extend(Some(y));
-                (xs, ys)
-            },
-        )
+        self.fold((Default::default(), Default::default()), |(mut xs, mut ys), (x, y)| {
+            xs.extend(Some(x));
+            ys.extend(Some(y));
+            (xs, ys)
+        })
     }
 
     fn by_ref(&mut self) -> &mut Self
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         self
     }
 
@@ -753,9 +743,7 @@ pub trait TryIterator {
     }
 
     fn take(self, n: usize) -> Take<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Take::new(self, n)
     }
 
@@ -796,9 +784,7 @@ pub trait TryIterator {
     }
 
     fn skip(self, n: usize) -> Skip<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Skip::new(self, n)
     }
 
@@ -839,9 +825,7 @@ pub trait TryIterator {
     }
 
     fn cycle(self) -> Cycle<Self>
-    where
-        Self: Sized + Clone,
-    {
+    where Self: Sized + Clone {
         Cycle::new(self)
     }
 
@@ -862,30 +846,22 @@ pub trait TryIterator {
     }
 
     fn enumerate(self) -> Enumerate<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Enumerate::new(self)
     }
 
     fn fuse(self) -> Fuse<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Fuse::new(self)
     }
 
     fn peekable(self) -> Peekable<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         Peekable::new(self)
     }
 
     fn step_by(self, n: usize) -> StepBy<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         StepBy::new(self, n)
     }
 
@@ -906,16 +882,13 @@ pub trait TryIterator {
     }
 
     fn into_results(self) -> IntoResults<Self>
-    where
-        Self: Sized,
-    {
+    where Self: Sized {
         IntoResults::new(self)
     }
 }
 
 impl<I> TryIterator for &mut I
-where
-    I: TryIterator + ?Sized,
+where I: TryIterator + ?Sized
 {
     type Item = I::Item;
     type Error = I::Error;

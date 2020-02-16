@@ -8,8 +8,7 @@ pub struct Cycle<I> {
 }
 
 impl<I> Cycle<I>
-where
-    I: Clone,
+where I: Clone
 {
     pub(crate) fn new(iter: I) -> Self {
         let current = iter.clone();
@@ -18,8 +17,7 @@ where
 }
 
 impl<I> TryIterator for Cycle<I>
-where
-    I: TryIterator + Clone,
+where I: TryIterator + Clone
 {
     type Item = I::Item;
     type Error = I::Error;
