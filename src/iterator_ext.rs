@@ -96,15 +96,6 @@ pub trait IteratorExt: Iterator {
         IteratorWrapper::new(self).try_find_map(f)
     }
 
-    fn try_find<F, R>(&mut self, f: F) -> Result<Option<Self::Item>, R::Error>
-    where
-        Self: Sized,
-        F: FnMut(&Self::Item) -> R,
-        R: Try<Ok = bool>,
-    {
-        IteratorWrapper::new(self).try_find(f)
-    }
-
     fn try_position<F, R>(&mut self, f: F) -> Result<Option<usize>, R::Error>
     where
         Self: Sized,

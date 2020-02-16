@@ -40,10 +40,10 @@ impl<T> OptionExt<T> for Option<T> {
         F: FnOnce(T) -> R,
         R: Try,
     {
-        match self {
-            None => Ok(None),
-            Some(x) => Ok(Some(f(x)?)),
-        }
+        Ok(match self {
+            None => None,
+            Some(x) => Some(f(x)?),
+        })
     }
 }
 
