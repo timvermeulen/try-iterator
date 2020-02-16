@@ -777,22 +777,22 @@ pub trait TryIterator {
         TakeWhile::new(self, f)
     }
 
-    fn take_while_map<F, T>(self, f: F) -> TakeWhileMap<Self, FnWrapper<F, Self::Error>>
+    fn map_while<F, T>(self, f: F) -> MapWhile<Self, FnWrapper<F, Self::Error>>
     where
         Self: Sized,
         F: FnMut(Self::Item) -> Option<T>,
     {
-        self.try_take_while_map(FnWrapper::new(f))
+        self.try_map_while(FnWrapper::new(f))
     }
 
-    fn try_take_while_map<F, R, T>(self, f: F) -> TakeWhileMap<Self, F>
+    fn try_map_while<F, R, T>(self, f: F) -> MapWhile<Self, F>
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
         R: Try<Ok = Option<T>>,
         R::Error: From<Self::Error>,
     {
-        TakeWhileMap::new(self, f)
+        MapWhile::new(self, f)
     }
 
     fn skip(self, n: usize) -> Skip<Self>

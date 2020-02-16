@@ -5,7 +5,6 @@
     never_type,
     unboxed_closures,
     try_blocks,
-    mem_take,
     specialization
 )]
 

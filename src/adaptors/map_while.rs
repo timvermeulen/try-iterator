@@ -2,13 +2,13 @@ use super::*;
 
 #[derive(Clone, Debug)]
 #[must_use = "iterators are lazy and do nothing unless consumed"]
-pub struct TakeWhileMap<I, F> {
+pub struct MapWhile<I, F> {
     iter: I,
     f: F,
     flag: bool,
 }
 
-impl<I, F> TakeWhileMap<I, F> {
+impl<I, F> MapWhile<I, F> {
     pub(crate) fn new(iter: I, f: F) -> Self {
         Self {
             iter,
@@ -18,7 +18,7 @@ impl<I, F> TakeWhileMap<I, F> {
     }
 }
 
-impl<I, F, R, T> TryIterator for TakeWhileMap<I, F>
+impl<I, F, R, T> TryIterator for MapWhile<I, F>
 where
     I: TryIterator,
     F: FnMut(I::Item) -> R,
@@ -65,7 +65,7 @@ where
     }
 }
 
-impl<I, F, R, T> FusedTryIterator for TakeWhileMap<I, F>
+impl<I, F, R, T> FusedTryIterator for MapWhile<I, F>
 where
     I: FusedTryIterator,
     F: FnMut(I::Item) -> R,

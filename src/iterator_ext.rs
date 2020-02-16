@@ -60,13 +60,13 @@ pub trait IteratorExt: Iterator {
         IteratorWrapper::new(self).try_take_while(f)
     }
 
-    fn try_take_while_map<F, R, T>(self, f: F) -> TakeWhileMap<IteratorWrapper<Self, R::Error>, F>
+    fn try_map_while<F, R, T>(self, f: F) -> MapWhile<IteratorWrapper<Self, R::Error>, F>
     where
         Self: Sized,
         F: FnMut(Self::Item) -> R,
         R: Try<Ok = Option<T>>,
     {
-        IteratorWrapper::new(self).try_take_while_map(f)
+        IteratorWrapper::new(self).try_map_while(f)
     }
 
     fn try_skip_while<F, R>(self, f: F) -> SkipWhile<IteratorWrapper<Self, R::Error>, F>
